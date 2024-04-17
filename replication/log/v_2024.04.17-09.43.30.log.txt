@@ -1,0 +1,2240 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/log/v_2024.04.17-09.43.30.log.txt
+  log type:  text
+ opened on:  17 Apr 2024, 09:43:30
+
+. 
+.         
+. * Perform main analyses
+. do      $DO/01_maketables.do
+
+. 
+. 
+. *******
+. * setting the specification
+. global sample "inlist(bula_3rd, 4, 13, 16) & target == 1 & nonmiss == 1"
+
+. global yrs "inrange(year_3rd, 2006, 2010)"
+
+. global vce "vce(cluster cityno)"
+
+. 
+. * outcomes
+. global out "kommheard kommgotten kommused sportsclub sport_hrs oweight" 
+
+. 
+. * further global macros
+. global controls "female siblings born_germany parent_nongermany newspaper art_at_home academictrack sportsclub_4_7 music_4_7"
+
+. global further "sport1hrs sport2hrs sport3hrs sport_alt2 health1 obese eversmoked currentsmoking everalc alclast7"
+
+. global hte "female urban newspaper art_at_home academictrack sportsclub_4_7"            
+
+. global fe3 "i.year_3rd i.bula_3rd i.cityno" 
+
+. global fe1 "i.year_1st i.bula_1st i.cityno" 
+
+. global fe_now "i.year_3rd i.bula i.cityno" 
+
+. global age "inrange(age, 5, 12)"
+
+. 
+. 
+. *****************************************************************
+. *
+. * Tables in main text
+. *
+. *****************************************************************
+. use ${DATA_IN}MSZ_main-data.dta, clear
+
+. 
+. 
+. *** Table 1: Summary Statistics
+. 
+. est drop _all
+
+. estpost summarize age female urban academictrack newspaper art_at_home $out tbula_3rd treat if $sample & $yrs
+
+             |  e(count)   e(sum_w)    e(mean)     e(Var)      e(sd)     e(min)     e(max)     e(sum) 
+-------------+----------------------------------------------------------------------------------------
+         age |     13334      13334   17.49483   2.035037   1.426547         14         20     233276 
+      female |     13331      13331   .5707749   .2450093   .4949841          0          1       7609 
+       urban |     13334      13334   .6106195   .2377812   .4876281          0          1       8142 
+academictr~k |     13262      13262   .4977379   .2500137   .5000137          0          1       6601 
+   newspaper |     13242      13242   .5789156   .2437907   .4937517          0          1       7666 
+ art_at_home |     13255      13255   .7274991   .1982591    .445263          0          1       9643 
+   kommheard |     13334      13334   .1865907    .151786   .3895972          0          1       2488 
+  kommgotten |     13334      13334     .09907   .0892619   .2987672          0          1       1321 
+    kommused |     13334      13334   .0612719    .057522   .2398374          0          1        817 
+  sportsclub |     13334      13334   .4187791   .2434214   .4933776          0          1       5584 
+   sport_hrs |     13334      13334   4.665142    17.4716   4.179904          0         31      62205 
+     oweight |     13334      13334   .1562922   .1318748   .3631457          0          1       2084 
+   tbula_3rd |     13334      13334    .540798   .2483542   .4983514          0          1       7211 
+       treat |     13334      13334   .3770061   .2348901   .4846546          0          1       5027 
+
+. estout using $MY_TAB/summary.tex, replace ///
+>         cells("mean(fmt(2)) sd(fmt(2)) min(fmt(0)) max(fmt(0))") style(tex) ///
+>         starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(25) label ///
+>         eqlabels(none) mlabels(none) collabels(none) 
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//summary.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//summary.tex)
+
+. 
+. 
+. 
+. *** Table 2: Evaluation of Sports Club Voucher Program: Main DD Results
+. 
+. est drop _all
+
+. foreach x of varlist $out {
+  2.         qui reg `x' treat tbula_3rd tcoh if $sample & $yrs, $vce
+  3.         est store m1_`x'
+  4.         qui reg `x' treat i.year_3rd i.bula_3rd if $sample & $yrs, $vce
+  5.         est store m2_`x'
+  6.         qui reg `x' treat i.year_3rd i.bula_3rd i.cityno if $sample & $yrs, $vce
+  7.         est store m3_`x'
+  8. }
+
+. 
+. global lkommheard "Program known"
+
+. global lkommgotten "Voucher received"
+
+. global lkommused "Voucher redeemed"
+
+. global lsportsclub "Member of sports club"
+
+. global lsport_hrs "Weekly hours of sport"
+
+. global loweight "Overweight"
+
+. 
+. cap erase "$MY_TAB/main.tex"
+
+. foreach x of varlist $out {
+  2.         estout m*_`x' using "$MY_TAB/main.tex", ///
+>                  cells(b(fmt(3) star) se(par fmt(3))) keep(treat) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "Voucher") varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace \multicolumn{1}{l}{\textbf{${l`x'}}} \\) 
+  3.                 }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main.tex)
+
+. foreach x of varlist kommheard {
+  2.         estout m*_`x' using "$MY_TAB/main.tex", ///
+>                  cells("") keep("") stats(N, fmt(%13.0gc)) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append  prehead(\addlinespace)
+  3.                 }
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main.tex)
+
+. 
+. 
+.                 
+. *** Table 3: Sports Club Membership Across Child Ages
+. 
+. est drop _all
+
+. foreach x of varlist ll6 ll7 ll8 ll9 ll10 ll11 ll12 {
+  2.         qui reg `x' treat $fe3 i.cityno if $sample & $yrs & nonmiss_p == 1, $vce
+  3.         est store e2_`x'
+  4. }
+
+. 
+. foreach j of numlist 6/12 {
+  2.         qui reg LL_sport`j' treat $fe3 if $sample & $yrs, $vce
+  3.         est store e3_ll`j'
+  4.         qui reg LL_sport`j' treat $fe3 if $sample & $yrs & nonmiss_p == 1, $vce
+  5.         est store e4_ll`j'
+  6. }
+
+. 
+. foreach j of numlist 6/12 {
+  2.         global lll`j' "Member of sports club at age `j'"
+  3.         }
+
+. cap erase "$MY_TAB/main_parents2.tex"
+
+. foreach x of varlist  ll6 ll7 ll8 ll9 ll10 ll11 ll12  {
+  2.         estout e3_`x' e4_`x' e2_`x' using "$MY_TAB/main_parents2.tex", ///
+>                  cells(b(fmt(3) star) se(par fmt(3))) keep(treat) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "Voucher") varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace \multicolumn{4}{l}{\textbf{${l`x'}}} \\) 
+  3.                 }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex)
+
+. foreach x of varlist ll6 {
+  2.         estout e3_`x' e4_`x' e2_`x' using "$MY_TAB/main_parents2.tex", ///
+>                  cells("") stats(N, fmt(%13.0gc)) keep("") style(tex) varwidth(7)  ///
+>                  eqlabels(none) mlabels(none) collabels(none) append 
+  3.                 }
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents2.tex)
+
+. 
+. 
+.                 
+. *** Table 4: Robustness
+. 
+. est drop _all
+
+. foreach x of varlist $out {
+  2.         qui reg `x' treat $fe3 if $sample & inrange(year_3rd, 2007, 2010), $vce
+  3.         est store r1_`x'
+  4.         qui reg `x' treat $fe3 if $sample & inrange(year_3rd, 2000, 2010), $vce
+  5.         est store r2_`x'
+  6.         qui reg `x' treat $fe3 if $sample & inrange(year_3rd, 2006, 2011), $vce
+  7.         est store r3_`x'
+  8.         qui reg `x' treat $fe3 if $sample & inrange(year_3rd, 2006, 2009), $vce
+  9.         est store r4_`x'
+ 10.         qui reg `x' treat $fe3 if inlist(bula_3rd, 13, 16) & $yrs & target == 1 & nonmiss ==1, $vce
+ 11.         est store r5_`x'
+ 12.         qui reg `x' treat $fe3 if inlist(bula_3rd, 4, 13) & $yrs & target == 1 & nonmiss ==1, $vce
+ 13.         est store r6_`x'
+ 14.         qui reg `x' treat $fe3 if $yrs & target == 1, $vce
+ 15.         est store r7_`x'
+ 16.         qui reg `x' treat $fe3 if $yrs & $sample & duration > 10 & duration < . & female_check == 1 & deutsch_check == 1 & dob_check == 1, $vce
+ 17.         est store s8_`x'
+ 18.         qui reg `x' treat $fe3 if $yrs & $sample & (sib_part == 0 | inrange(year_3rd, 2009, 2010)), $vce
+ 19.         est store s9_`x'
+ 20.         qui reg `x' treat $fe3 if $yrs & $sample & anz_osiblings == 0, $vce
+ 21.         est store s9b_`x'
+ 22.         cap gen treat_or = treat
+ 23.         qui replace treat = t_tcoh_1st
+ 24.         qui reg `x' treat $fe1 if inlist(bula_1st, 4, 13, 16) & inrange(year_1st, 2004, 2008) & target == 1 & nonmiss ==1, $vce
+ 25.         est store s10_`x'
+ 26.         qui replace treat = t_tcoh_bula
+ 27.         qui reg `x' treat $fe_now if inlist(bula, 4, 13, 16) & $yrs & target == 1 & nonmiss ==1, $vce
+ 28.         est store s11_`x'
+ 29.         qui replace treat = treat
+ 30.         qui reg `x' treat $fe3 $controls if $sample & $yrs, $vce
+ 31.         est store s12_`x'
+ 32.         qui reg `x' treat $fe3 if $sample & $yrs & ins_register == 1 [aw=weight2], $vce
+ 33.         est store s13_`x'
+ 34.         qui replace treat = treat_v2
+ 35.         qui reg `x' treat $fe3 if $sample & $yrs, $vce          
+ 36.         est store s14_`x'
+ 37.         qui replace treat = treat_or
+ 38.         cap drop treat_or
+ 39. }
+
+. 
+. cap erase "$MY_TAB/robust_p1.tex"
+
+. foreach x of varlist $out {
+  2.         estout r*_`x' using "$MY_TAB/robust_p1.tex", ///
+>                  cells(b(fmt(3) star) se(par fmt(3))) keep(treat) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "Voucher") varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace \multicolumn{5}{l}{\textbf{${l`x'}}} \\) 
+  3.                 }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p1.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p1.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p1.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p1.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p1.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p1.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p1.tex)
+
+. foreach x of varlist kommheard {
+  2.         estout r*_`x' using "$MY_TAB/robust_p1.tex", ///
+>                  cells("") keep("") stats(N, fmt(%13.0gc)) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace) 
+  3.                 }
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p1.tex)
+
+. cap erase "$MY_TAB/robust_p2.tex"
+
+. foreach x of varlist $out {
+  2.         estout s*_`x' using "$MY_TAB/robust_p2.tex", ///
+>                  cells(b(fmt(3) star) se(par fmt(3))) keep(treat) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "Voucher") varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace \multicolumn{5}{l}{\textbf{${l`x'}}} \\) 
+  3.                 }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p2.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p2.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p2.tex)
+
+. foreach x of varlist kommheard {
+  2.         estout s*_`x' using "$MY_TAB/robust_p2.tex", ///
+>                  cells("") keep("") stats(N, fmt(%13.0gc)) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace) 
+  3.                 }
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//robust_p2.tex)
+
+.                 
+.         
+. *** Table 6: Using Parents’ Responses for Program-Related Outcomes
+. 
+. est drop _all
+
+. foreach x of varlist kommheard_p kommgotten_p kommused_p {
+  2.         qui reg `x' treat $fe3 if $sample & $yrs & nonmiss_p == 1, $vce
+  3.         est store e2_`x'
+  4. }
+
+. 
+. qui reg kommheard treat $fe3 if $sample & $yrs, $vce
+
+. est store e3_kommheard_p
+
+. qui reg kommheard treat $fe3 if $sample & $yrs & nonmiss_p == 1, $vce
+
+. est store e4_kommheard_p
+
+. qui reg kommgotten treat $fe3 if $sample & $yrs, $vce
+
+. est store e3_kommgotten_p
+
+. qui reg kommgotten treat $fe3 if $sample & $yrs & nonmiss_p == 1, $vce
+
+. est store e4_kommgotten_p
+
+. qui reg kommused treat $fe3 if $sample & $yrs, $vce
+
+. est store e3_kommused_p
+
+. qui reg kommused treat $fe3 if $sample & $yrs & nonmiss_p == 1, $vce
+
+. est store e4_kommused_p
+
+. 
+. global lkommheard_p "Program known"
+
+. global lkommgotten_p "Voucher received"
+
+. global lkommused_p "Voucher redeemed"
+
+. cap erase "$MY_TAB/main_parents.tex"
+
+. foreach x of varlist kommheard_p kommgotten_p kommused_p {
+  2.         estout e3_`x' e4_`x' e2_`x' using "$MY_TAB/main_parents.tex", ///
+>                  cells(b(fmt(3) star) se(par fmt(3))) keep(treat) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "Voucher") varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace \multicolumn{4}{l}{\textbf{${l`x'}}} \\) 
+  3.                 }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents.tex)
+
+. foreach x of varlist kommused_p {
+  2.         estout e3_`x' e4_`x' e2_`x' using "$MY_TAB/main_parents.tex", ///
+>                  cells("")  stats(N, fmt(%13.0gc)) keep("") style(tex) varwidth(7)  ///
+>                  eqlabels(none) mlabels(none) collabels(none) append 
+  3.                 }
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//main_parents.tex)
+
+. 
+. * Correlationen between information provided by parents and their children
+. corr kommheard kommheard_p if $sample & $yrs & nonmiss_p == 1 & treat == 1
+(obs=832)
+
+             | kommhe~d kommhe~p
+-------------+------------------
+   kommheard |   1.0000
+ kommheard_p |   0.4184   1.0000
+
+
+. corr kommgotten kommgotten_p if $sample & $yrs & nonmiss_p == 1 & treat == 1
+(obs=832)
+
+             | kommgo~n kommgo~p
+-------------+------------------
+  kommgotten |   1.0000
+kommgotten_p |   0.4728   1.0000
+
+
+. corr kommused kommused_p if $sample & $yrs & nonmiss_p == 1 & treat == 1
+(obs=832)
+
+             | kommused kommus~p
+-------------+------------------
+    kommused |   1.0000
+  kommused_p |   0.5024   1.0000
+
+
+. corr kommheard kommheard_p if $sample & $yrs & nonmiss_p == 1
+(obs=2,045)
+
+             | kommhe~d kommhe~p
+-------------+------------------
+   kommheard |   1.0000
+ kommheard_p |   0.5166   1.0000
+
+
+. corr kommgotten kommgotten_p if $sample & $yrs & nonmiss_p == 1
+(obs=2,045)
+
+             | kommgo~n kommgo~p
+-------------+------------------
+  kommgotten |   1.0000
+kommgotten_p |   0.5400   1.0000
+
+
+. corr kommused kommused_p if $sample & $yrs & nonmiss_p == 1
+(obs=2,045)
+
+             | kommused kommus~p
+-------------+------------------
+    kommused |   1.0000
+  kommused_p |   0.5440   1.0000
+
+
+. 
+. 
+. *** Table 7: Synthetic Control Group Results
+. * --> see 03_synthetic_control
+.                 
+.                 
+. *****************************************************************
+. *
+. * Tables in appendix
+. *
+. *****************************************************************
+. 
+. 
+. *** Table A.2: Summary Statistics: Treatment vs. Control States
+. 
+. est drop _all
+
+. gen tbula_rev = 1 - tbula_3rd
+(787 missing values generated)
+
+. estpost ttest $controls $further age urban $out tbula_3rd treat if $sample & $yrs, by(tbula_rev)
+
+             |      e(b)   e(count)      e(se)       e(t)    e(df_t)     e(p_l)       e(p)     e(p_u)     e(N_1)    e(mu_1)     e(N_2)    e(mu_2) 
+-------------+------------------------------------------------------------------------------------------------------------------------------------
+      female |  .0088455      13331   .0086028   1.028218      13329   .8480669   .3038662   .1519331       7209    .574837       6122   .5659915 
+    siblings |  .0292217      13185   .0061422   4.757512      13183    .999999   1.98e-06   9.90e-07       7133   .8687789       6052   .8395572 
+born_germany | -.0065168      13258   .0032973  -1.976426      13256   .0240636   .0481273   .9759364       7168   .9598214       6090   .9663383 
+parent_non~y |  .0195408      13253   .0057899   3.374969      13251   .9996298   .0007404   .0003702       7166   .1353614       6087   .1158206 
+   newspaper | -.0853326      13242   .0085785  -9.947277      13240   1.56e-23   3.13e-23          1       7161   .5397291       6081   .6250617 
+ art_at_home |  .0144486      13255   .0077602   1.861888      13253   .9686795    .062641   .0313205       7169   .7341331       6086   .7196845 
+academictr~k | -.0122273      13262    .008713  -1.403341      13260   .0802693   .1605386   .9197307       7177   .4921276       6085    .504355 
+sportsclub~7 | -.0428635      12476    .008944  -4.792409      12474   8.33e-07   1.67e-06   .9999992       6748   .5220806       5728   .5649441 
+   music_4_7 |  .0246989      12476   .0089518   2.759102      12474   .9970978   .0058045   .0029022       6748   .4711025       5728   .4464036 
+   sport1hrs |  .0000199      13334    .005346   .0037239      13332   .5014856   .9970288   .4985144       7211   .8941894       6123   .8941695 
+   sport2hrs | -.0095271      13334   .0073606  -1.294338      13332   .0977856   .1955713   .9022144       7211   .7613368       6123    .770864 
+   sport3hrs | -.0225107      13334   .0083901  -2.683003      13332   .0036527   .0073054   .9963473       7211   .6193316       6123   .6418422 
+  sport_alt2 |  .0006785      13277   .0086107    .078801      13275   .5314039   .9371921   .4685961       7181   .5749896       6096    .574311 
+     health1 | -.0226977      13334   .0076845  -2.953715      13332   .0015726   .0031452   .9984274       7211   .2564138       6123   .2791115 
+       obese | -.0059014      13334   .0033888  -1.741437      13332    .040815     .08163    .959185       7211   .0368881       6123   .0427895 
+  eversmoked | -.0427568      13326   .0086456  -4.945498      13324   3.84e-07   7.69e-07   .9999996       7205   .5274115       6121   .5701683 
+currentsmo~g | -.0131086      13275    .007105  -1.844997      13273   .0325301   .0650602   .9674699       7179   .2049032       6096   .2180118 
+     everalc |  -.028491      13295   .0066448  -4.287739      13293   9.09e-06   .0000182   .9999909       7191   .8094841       6104   .8379751 
+    alclast7 | -.0146136      13294   .0086989  -1.679937      13292   .0464965   .0929931   .9535035       7191   .5066055       6103   .5212191 
+         age |  .1340302      13334   .0247643   5.412234      13332          1   6.33e-08   3.17e-08       7211   17.55637       6123   17.42234 
+       urban |  .3242899      13334   .0079954   40.55963      13332          1          0          0       7211    .759534       6123   .4352442 
+   kommheard |  .2961051      13334   .0062662   47.25412      13332          1          0          0       7211   .3225628       6123   .0264576 
+  kommgotten |  .1747365      13334   .0049667   35.18131      13332          1   2.3e-259   1.1e-259       7211   .1793094       6123   .0045729 
+    kommused |  .1072592      13334   .0040632   26.39758      13332          1   9.9e-150   5.0e-150       7211   .1105256       6123   .0032664 
+  sportsclub | -.0117222      13334   .0085736  -1.367237      13332   .0857871   .1715741   .9142129       7211   .4133962       6123   .4251184 
+   sport_hrs | -.0730338      13334   .0726384  -1.005442      13332   .1573511   .3147022   .8426489       7211   4.631604       6123   4.704638 
+     oweight | -.0166167      13334   .0063094  -2.633661      13332   .0042284   .0084567   .9957716       7211   .1486618       6123   .1652785 
+   tbula_3rd |         1      13334          0          .      13332          .          .          .       7211          1       6123          0 
+       treat |  .6971294      13334   .0058727   118.7074      13332          1          0          0       7211   .6971294       6123          0 
+
+. estout using $MY_TAB/descr_further.tex, replace ///
+>         cells("mu_1(fmt(2)) mu_2(fmt(2)) b(fmt(2) star)") style(tex) ///
+>         starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(35) label ///
+>         eqlabels(none) mlabels(none) collabels(none) 
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_further.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_further.tex)
+
+.         
+. 
+. 
+.         
+. *** Table A.3: Registry vs. Self-Reported Socio-Demographics
+. 
+. est drop _all
+
+. estpost summarize female_check deutsch_check yob_check mobyear_check dob_check if $sample & $yrs
+
+             |  e(count)   e(sum_w)    e(mean)     e(Var)      e(sd)     e(min)     e(max)     e(sum) 
+-------------+----------------------------------------------------------------------------------------
+female_check |     13331      13331   .9952742   .0047038   .0685846          0          1      13268 
+deutsch_ch~k |     13040      13040   .9950153   .0049602   .0704287          0          1      12975 
+   yob_check |     12105      12105   .9930607   .0068917   .0830162          0          1      12021 
+mobyear_ch~k |     12105      12105   .9853779   .0144094   .1200393          0          1      11928 
+   dob_check |     12105      12105   .9736473   .0256604   .1601886          0          1      11786 
+
+. estout using $MY_TAB/reliability.tex, replace ///
+>         cells("mean(fmt(3)) count(fmt(0))") style(tex) ///
+>         starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(25) label ///
+>         eqlabels(none) mlabels(none) collabels(none) 
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//reliability.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//reliability.tex)
+
+. 
+.         
+.         
+. *** Table A4: Administrative Data: YOLO Participants vs. Non-Participants
+. * --> see 06_registrydata
+. 
+. *** Table A5: Comparison of YOLO and SOEP participants
+. * --> see 05_soep_comparison
+. 
+. *** Table A6: Survey Participation as Outcome in DD Framework
+. * --> see 06_registrydata
+. 
+. 
+. *** Table B1: Difference-in-Differences: Heterogeneity
+. 
+. est drop _all
+
+. foreach x of varlist $out {
+  2.         local g = 1
+  3.         foreach group in $hte {
+  4.                 qui reg `x' treat $fe3 if $sample & $yrs & `group' == 0, $vce
+  5.                 est store h`g'0_`x'
+  6.                 qui reg `x' treat $fe3 if $sample & $yrs & `group' == 1, $vce
+  7.                 est store h`g'1_`x'
+  8.                 local g = `g' + 1
+  9.         }
+ 10. }
+
+. cap erase "$MY_TAB/hte.tex"
+
+. foreach x of varlist $out {
+  2.         estout h*_`x' using "$MY_TAB/hte.tex", ///
+>                  cells(b(fmt(3) star) se(par fmt(3))) keep(treat) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "Voucher") varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace \multicolumn{5}{l}{\textbf{${l`x'}}} \\) 
+  3.                 }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte.tex)
+
+. foreach x of varlist kommheard {
+  2.         estout h*_`x' using "$MY_TAB/hte.tex", ///
+>                  cells("") keep("") stats(N, fmt(%13.0gc)) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append  prehead(\addlinespace)
+  3.                 }
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte.tex)
+
+.         
+. 
+.         
+. *** Table B2: Alternative Aged-Based Difference-in-Differences Models
+. preserve
+
+. keep if $sample
+(3,023 observations deleted)
+
+. keep if $yrs
+(3,493 observations deleted)
+
+. keep LL_sport* treat bula_3rd bula year_3rd cityno
+
+. gen id = _n
+
+. reshape long LL_sport, i(id) j(age)
+(j = 5 6 7 8 9 10 11 12)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations           13,334   ->   106,672     
+Number of variables                  14   ->   8           
+j variable (8 values)                     ->   age
+xij variables:
+     LL_sport5 LL_sport6 ... LL_sport12   ->   LL_sport
+-----------------------------------------------------------------------------
+
+. 
+. gen tyear = inrange(year_3rd, 2008, 2010)
+
+. gen tbula = bula_3rd == 13
+
+. gen tage = .
+(106,672 missing values generated)
+
+. foreach j of numlist 7/12 {
+  2.         gen treat`j' = tyear * tbula * (age == `j')
+  3.         label var treat`j' "Effect at age `j'"
+  4. }
+
+. foreach j of numlist 7/8 {
+  2.         label var treat`j' "(Placebo) Effect at age `j'"
+  3. }
+
+. 
+. drop treat
+
+. gen treat = treat9 == 1 | treat10 == 1 | treat11 == 1 | treat12 == 1 if treat9 != .
+
+. label var treat "Overall effect"
+
+. 
+. * within Saxony estimation (first difference: cohort, second difference: age)
+. eststo event_sn1: qui reg LL_sport treat i.year_3rd i.age if $yrs & inlist(bula_3rd, 13) & $age, cluster(id)
+
+. eststo event_sn2: qui reg LL_sport treat? treat?? i.year_3rd i.age if $yrs & inlist(bula_3rd, 13) & $age, cluster(id)
+
+. * within treated cohort estimation (first difference: state, second difference: age)
+. eststo event_coh1: qui reg LL_sport treat i.bula_3rd i.age if inrange(year_3rd, 2008, 2010) & inlist(bula_3rd, 4, 13, 16) & $age, cluster(id)
+
+. eststo event_coh2: qui reg LL_sport treat? treat?? i.bula_3rd i.age if inrange(year_3rd, 2008, 2010) & inlist(bula_3rd, 4, 13, 16) & $age, cluster(id)
+
+. estout event_sn1 event_sn2 event_coh1 event_coh2 using "$MY_TAB/Event_alt1.tex", ///
+>          cells(b(fmt(3) star) se(par fmt(3))) stats(N, fmt(%13.0gc)) keep(treat*) style(tex) ///
+>          starlevels(* 0.10 ** 0.05 *** 0.01) label varwidth(30) ///
+>          eqlabels(none) mlabels(none) collabels(none) replace  
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//Event_alt1.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//Event_alt1.tex)
+
+. restore 
+
+. 
+. 
+. 
+. *** Table B.3: Characteristics of Parents of Sports Club Members
+. foreach x of numlist 1/11 {
+  2.         label var sport`x'_p "Sport `x'"
+  3.         }
+
+. label var age_p "Age"
+
+. 
+. est drop _all
+
+. qui estpost ttest abi_p real_p haupt_p age_p memsport_p sport?_p sport10_p sport11_p sprtlch_p if target == 1, by(LL_sport8)
+
+. estout using $MY_TAB/descr_par.tex, replace ///
+>         cells("mu_1(fmt(2)) mu_2(fmt(2)) b(fmt(2) star) count(fmt(0))") style(tex) ///
+>         starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(25) label ///
+>         eqlabels(none) mlabels(none) collabels(none) 
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par.tex)
+
+. 
+. 
+. cap erase "$MY_TAB/descr_par_plus.tex"
+
+. foreach var of varlist abi_p real_p haupt_p age_p memsport_p sport?_p sport10_p sport11_p sprtlch_p {
+  2.         qui sum `var' if LL_sport8==0 &  target == 1
+  3.         scalar `var'_mean_t=r(mean) 
+  4.         local `var'_mean_b_t=r(mean) 
+  5.         local `var'_var_b_t=r(Var)
+  6.         qui sum `var' if LL_sport8==1 &  target == 1
+  7.         scalar `var'_mean_b_c=r(mean) 
+  8.         local `var'_mean_b_c=r(mean) 
+  9.         local `var'_var_b_c=r(Var)
+ 10.         scalar `var'_b= (``var'_mean_b_t' - ``var'_mean_b_c')/sqrt(``var'_var_b_t' + ``var'_var_b_c')
+ 11. 
+.         matrix `var'_m = [`var'_b]
+ 12.         *matrix rownames `var'_m = `: variable label `var''
+.         estout matrix(`var'_m,  fmt(2)) using "$MY_TAB/descr_par_plus.tex", append style(tex)  mlabels(none) collabels(none)
+ 13. }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_par_plus.tex)
+
+. 
+. 
+. *** Table B4: Socio-Demographics of Children who Redeemed the Voucher
+. gen kommused_rev = 1 - kommused
+(520 missing values generated)
+
+. est drop _all
+
+. estpost ttest $controls sumvereineall if treat == 1 & $sample & $yrs, by(kommused_rev)
+
+             |      e(b)   e(count)      e(se)       e(t)    e(df_t)     e(p_l)       e(p)     e(p_u)     e(N_1)    e(mu_1)     e(N_2)    e(mu_2) 
+-------------+------------------------------------------------------------------------------------------------------------------------------------
+      female | -.0101122       5025    .019617  -.5154805       5023     .30312     .60624     .69688        744   .5698925       4281   .5800047 
+    siblings |  .0179292       4965   .0135976   1.318557       4963   .9063109   .1873782   .0936891        739   .8809202       4226    .862991 
+born_germany |  .0149128       4993   .0076662   1.945265       4991   .9741004   .0517992   .0258996        738   .9742547       4255    .959342 
+parent_non~y | -.0530456       4995   .0138911  -3.818665       4993   .0000679   .0001358   .9999321        741    .097166       4254   .1502116 
+   newspaper |  .0864954       4992   .0197374   4.382317       4990    .999994    .000012   5.99e-06        738   .6382114       4254    .551716 
+ art_at_home |  .0779037       4998   .0173717   4.484512       4996   .9999963   7.47e-06   3.74e-06        738   .8102981       4260   .7323944 
+academictr~k |  .0874709       4997   .0194147   4.505396       4995   .9999966   6.78e-06   3.39e-06        742   .6792453       4255   .5917744 
+sportsclub~7 |  .1582305       4670   .0203394   7.779514       4668          1   8.90e-15   4.45e-15        699   .6666667       3971   .5084362 
+   music_4_7 |  .0737161       4670   .0204624   3.602518       4668   .9998408   .0003184   .0001592        699   .5393419       3971   .4656258 
+sumvereine~l |  .3818237       5027   .4416176   .8646026       5025   .8063509   .3872982   .1936491        744   16.02016       4283   15.63834 
+
+. estout using $MY_TAB/descr_redeemer.tex, replace ///
+>         cells("mu_1(fmt(2)) mu_2(fmt(2)) b(fmt(2) star) count(fmt(0))") style(tex) ///
+>         starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(35) label ///
+>         eqlabels(none) mlabels(none) collabels(none) 
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer.tex)
+
+. 
+. cap erase "$MY_TAB/descr_redeemer_plus.tex"
+
+. foreach var of varlist $controls sumvereineall {
+  2.         qui sum `var' if kommused_rev==0 &  treat == 1 & $sample & $yrs
+  3.         scalar `var'_mean_t=r(mean) 
+  4.         local `var'_mean_b_t=r(mean) 
+  5.         local `var'_var_b_t=r(Var)
+  6.         qui sum `var' if kommused_rev==1 &  treat == 1 & $sample & $yrs
+  7.         scalar `var'_mean_b_c=r(mean) 
+  8.         local `var'_mean_b_c=r(mean) 
+  9.         local `var'_var_b_c=r(Var)
+ 10.         scalar `var'_b= (``var'_mean_b_t' - ``var'_mean_b_c')/sqrt(``var'_var_b_t' + ``var'_var_b_c')
+ 11.         matrix `var'_m = [`var'_b]
+ 12.         *matrix rownames `var'_m = `: variable label `var''
+.         estout matrix(`var'_m,  fmt(2)) using "$MY_TAB/descr_redeemer_plus.tex", append style(tex)  mlabels(none) collabels(none)
+ 13. }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//descr_redeemer_plus.tex)
+
+.         
+.         
+. 
+. *** Table B5: Difference-in-Differences: Alternative Methods of Inference
+. 
+. est drop _all
+
+. findfile "boottest.mata"
+G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/Ado/boottest.mata
+
+. run "`r(fn)'"
+file C:\Users\Julius\ado\plus/l\lboottest.mlib could not be opened
+--Break--
+
+. *sort   lfdn
+. *set    seed 12345
+. cap erase "$MY_TAB/se.tex"
+
+. foreach x of varlist $out  {
+  2.         qui reg `x' treat $fe3 if $sample & $yrs, robust
+  3.         matrix eb=e(b)
+  4.         matrix eV=e(V)
+  5.         local t = (eb[1,1]) / sqrt(eV[1,1])
+  6.         local p = 2*(ttail(e(df_r)), abs(`t'))
+  7.         qui estadd scalar p`x' = `p'
+  8.         est store se1_`x'
+  9. 
+.         qui reg `x' treat $fe3 if $sample & $yrs
+ 10.         qui boottest treat, nograph reps(0)     
+ 11.         qui estadd scalar p`x' = r(p)
+ 12.         est store se2_`x'
+ 13. 
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cityno)
+ 14.         qui boottest treat, nograph reps(0)     
+ 15.         qui estadd scalar p`x' = r(p)
+ 16.         est store se3_`x'
+ 17. 
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(bula_3rd)
+ 18.         qui boottest treat, nograph reps(0)     
+ 19.         local p = `r(p)'
+ 20.         qui estadd scalar p`x' = r(p)
+ 21.         est store se4_`x'
+ 22.         
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cohort)
+ 23.         qui boottest treat, nograph reps(0)     
+ 24.         qui estadd scalar p`x' = r(p)
+ 25.         est store se5_`x'
+ 26. 
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cityno)
+ 27.         qui boottest treat, nograph reps(0)     cluster(cityno year_3rd)
+ 28.         qui estadd scalar p`x' = r(p)
+ 29.         est store se6_`x'
+ 30.         
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cohort)
+ 31.         qui boottest treat, nograph reps(999) weighttype(rademacher)    
+ 32.         qui estadd scalar p`x' = r(p)
+ 33.         est store se7_`x'
+ 34.         
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cohort)
+ 35.         qui boottest treat, nograph reps(999) weighttype(mammen)        
+ 36.         qui estadd scalar p`x' = r(p)
+ 37.         est store se8_`x'
+ 38.         
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cohort)
+ 39.         qui boottest treat, nograph reps(999) weighttype(webb)  
+ 40.         qui estadd scalar p`x' = r(p)
+ 41.         est store se9_`x'
+ 42.         
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cohort)
+ 43.         qui boottest treat, nograph reps(999) weighttype(rademacher) nonull     
+ 44.         qui estadd scalar p`x' = r(p)
+ 45.         est store se10_`x'
+ 46.         
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cohort)
+ 47.         qui boottest treat, nograph reps(999) weighttype(webb) nonull   
+ 48.         qui estadd scalar p`x' = r(p)
+ 49.         est store se11_`x'
+ 50.         
+.         qui reg `x' treat $fe3 if $sample & $yrs, cluster(cohort)
+ 51.         qui boottest treat, nograph reps(999) weighttype(webb) nonull   
+ 52.         qui estadd scalar p`x' = r(p)
+ 53.         est store se12_`x'
+ 54. 
+.         estout se*_`x' using "$MY_TAB/se.tex", ///
+>                  cells(none) stats(p`x', fmt(3) labels("p-value")) keep() style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace \multicolumn{5}{l}{\textbf{${l`x'}}} \\) 
+ 55. }
+cityno year_3rdcohortcohortcohortcohortcohortcohort
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//se.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//se.tex)
+cityno year_3rdcohortcohortcohortcohortcohortcohort(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//se.tex)
+cityno year_3rdcohortcohortcohortcohortcohortcohort(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//se.tex)
+cityno year_3rdcohortcohortcohortcohortcohortcohort(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//se.tex)
+cityno year_3rdcohortcohortcohortcohortcohortcohort(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//se.tex)
+cityno year_3rdcohortcohortcohortcohortcohortcohort(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//se.tex)
+
+. 
+. 
+. *** Table B6: Limits of Confidence Intervals
+. * --> See 04_power.do
+. 
+. *** Table B7: Power Calculations
+. * --> See 04_power.do
+. 
+end of do-file
+
+. do      $DO/02_makegraphs.do
+
+. 
+. 
+. 
+. 
+. 
+. *******
+. * setting the specification
+. global sample "inlist(bula_3rd, 4, 13, 16) & target == 1 & nonmiss == 1"
+
+. global yrs "inrange(year_3rd, 2006, 2010)"
+
+. global vce "vce(cluster cityno)"
+
+. 
+. * outcomes
+. global out "kommheard kommgotten kommused sportsclub sport_hrs oweight" 
+
+. 
+. * further
+. global controls "female siblings born_germany parent_nongermany newspaper art_at_home academictrack sportsclub_4_7 music_4_7"
+
+. global further "sport1hrs sport2hrs sport3hrs sport_alt2 health1 obese eversmoked currentsmoking everalc alclast7"
+
+. global hte "female urban newspaper art_at_home academictrack sportsclub_4_7"            
+
+. global fe3 "i.year_3rd i.bula_3rd i.cityno" // treat
+
+. global fe1 "i.year_1st i.bula_1st i.cityno" // t_tcoh_1st
+
+. global fe_now "i.year_3rd i.bula i.cityno" // t_tcoh_bula
+
+. global age "inrange(age, 5, 12)"
+
+. 
+. 
+. 
+. 
+. use ${DATA_IN}MSZ_main-data.dta, clear
+
+. 
+. 
+. *****************************************************************
+. *
+. * Graphs: Main 
+. *
+. *****************************************************************
+. 
+. 
+. **** Figure 1: Development of Outcome Variables in Treatment and Control States across Cohorts
+. preserve 
+
+. gen     cnt = 1
+
+. collapse (mean) $out treat (sum) cnt, by(tbula_3rd year_3rd)
+
+. 
+. *label def years 2006 "2006/07" 2007 "2007/08" 2008 "2008/09" 2009 "2009/10" 2010 "2010/11" 2011 "2011/12"
+. *label val year_3rd years
+. 
+. 
+. foreach x of varlist kommheard kommgotten kommused {
+  2.         qui replace `x' = `x' * 100
+  3.         tw(scatter `x' year_3rd if $yrs & tbula == 1, ///
+>                         c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>                 (scatter `x' year_3rd if $yrs & tbula == 0, ///
+>                         c(l) legend(label(2 "Control states")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>                 xline(2007.5) xline(2010.5) xlabel(, labels valuelabel) xtitle("")  ///
+>                         ylabel(0(10)50, angle(0)) ytitle("Percent") ///
+>                         name(DiD_`x', replace) legend(rows(1)) scheme(s1mono) 
+  4.         graph export "$MY_TAB/DiD_`x'.pdf", replace
+  5.         qui replace `x' = `x' / 100
+  6. }
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//DiD_kommheard.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//DiD_kommgotten.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//DiD_kommused.pdf saved as PDF format
+
+. foreach x of varlist sportsclub {
+  2.         qui replace `x' = `x' * 100
+  3.         tw(scatter `x' year_3rd if $yrs & tbula == 1, ///
+>                         c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>                 (scatter `x' year_3rd if $yrs & tbula == 0, ///
+>                         c(l) legend(label(2 "Control states")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>                 xline(2007.5) xline(2010.5) xlabel(, labels valuelabel) xtitle("")  ///
+>                         ylabel(25(5)55, angle(0)) ytitle("Percent") ///
+>                         name(DiD_`x', replace) legend(rows(1)) scheme(s1mono) 
+  4.         graph export "$MY_TAB/DiD_`x'.pdf", replace
+  5.         qui replace `x' = `x' / 100
+  6. }
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//DiD_sportsclub.pdf saved as PDF format
+
+. foreach x of varlist sport_hrs  {
+  2.         tw(scatter `x' year_3rd if $yrs & tbula == 1, ///
+>                         c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>                 (scatter `x' year_3rd if $yrs & tbula == 0, ///
+>                         c(l) legend(label(2 "Control states")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>                 xline(2007.5) xline(2010.5) xlabel(, labels valuelabel) xtitle("")  ///
+>                         ylabel(3(0.5)6, angle(0)) ytitle("Hours per week") ///
+>                         name(DiD_`x', replace) legend(rows(1)) scheme(s1mono) 
+  3.         graph export "$MY_TAB/DiD_`x'.pdf", replace
+  4. }
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//DiD_sport_hrs.pdf saved as PDF format
+
+. 
+. foreach x of varlist oweight  {
+  2.         qui replace `x' = `x' * 100
+  3.         tw(scatter `x' year_3rd if $yrs & tbula == 1, ///
+>                         c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>                 (scatter `x' year_3rd if $yrs & tbula == 0, ///
+>                         c(l) legend(label(2 "Control states")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>                 xline(2007.5) xline(2010.5) xlabel(, labels valuelabel) xtitle("")  ///
+>                         ylabel(0(5)25, angle(0)) ytitle("Percent") ///
+>                         name(DiD_`x', replace) legend(rows(1)) scheme(s1mono)
+  4.         graph export "$MY_TAB/DiD_`x'.pdf", replace
+  5.         qui replace `x' = `x' / 100
+  6. }
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//DiD_oweight.pdf saved as PDF format
+
+. restore
+
+. 
+. 
+. 
+. *** Figure 2: Effect Heterogeneity
+. foreach x of varlist $out {
+  2.         foreach group in $hte {
+  3.                 qui gen tX`group' = treat*`group'
+  4.                 eststo `x'_`group': qui reg `x' treat tX`group' i.year_3rd##`group' i.bula_3rd#`group' i.cityno#`group' if $sample & $yrs, $vce
+  5.                 drop tX`group'
+  6.         }
+  7. }
+
+. foreach x of varlist $out {
+  2.         coefplot `x'_sportsclub_4_7 `x'_newspaper `x'_art_at_home `x'_academictrack `x'_female `x'_urban, ///
+>                 keep(tX*) vertical yline(0) ylabel(-0.1(0.05)0.15, angle(0) format(%9.2f)) ///
+>                 xlabel(1 "Sports club bef. vs. not" 2 "Newspaper at home vs. not" 3 "Art at home vs. not" 4 "Academic track vs. not" 5 "Female vs. male" 6 "Urban vs. rural", 
+> angle(45)) ///
+>                 legend(off) nooff name(hte_`x', replace) title("") scheme(s1mono)
+  3.         graph export "$MY_TAB/hte_`x'.pdf", replace
+  4. }
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte_kommheard.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte_kommgotten.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte_kommused.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte_sportsclub.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte_sport_hrs.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte_oweight.pdf saved as PDF format
+
+. 
+. foreach x of varlist sport_hrs {
+  2.         coefplot `x'_sportsclub_4_7 `x'_newspaper `x'_art_at_home `x'_academictrack `x'_female `x'_urban, ///
+>                 keep(tX*) vertical yline(0) ylabel(-1.0(0.50)1.50, angle(0) format(%9.2f)) ///
+>                 xlabel(1 "Sports club bef. vs. not" 2 "Newspaper at home vs. not" 3 "Art at home vs. not" 4 "Academic track vs. not" 5 "Female vs. male" 6 "Urban vs. rural", 
+> angle(45)) ///
+>                 legend(off) nooff name(hte_`x', replace) title("") scheme(s1mono)
+  3.         graph export "$MY_TAB/hte_`x'.pdf", replace
+  4. }
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hte_sport_hrs.pdf saved as PDF format
+
+. 
+. 
+. *** Figure 3: Heterogeneity across Cohorts
+. foreach x of varlist $out {
+  2.         eststo m`x': qui reg `x' t_2008 t_2009 t_2010 i.year_3rd i.bula_3rd i.cityno if $sample & $yrs, $vce
+  3. }
+
+. foreach x of varlist kommheard kommgotten kommused {
+  2.         coefplot m`x', keep(t_*) vertical yline(0) ylabel(0(0.1)0.45, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "1st cohort" 2 "2nd cohort" 3 "3rd cohort", angle(45)) ///
+>                 legend(off) nooff name(event_`x', replace) title("") scheme(s1mono)
+  3.         graph export "$MY_TAB/event_`x'.pdf", replace
+  4.         }
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//event_kommheard.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//event_kommgotten.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//event_kommused.pdf saved as PDF format
+
+. foreach x of varlist sportsclub oweight {
+  2.         coefplot m`x', keep(t_*) vertical yline(0) ylabel(-0.2(0.1)0.2, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "1st cohort" 2 "2nd cohort" 3 "3rd cohort", angle(45)) ///
+>                 legend(off) nooff name(event_`x', replace) title("") scheme(s1mono)
+  3.         graph export "$MY_TAB/event_`x'.pdf", replace
+  4.         }       
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//event_sportsclub.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//event_oweight.pdf saved as PDF format
+
+. foreach x of varlist sport_hrs {
+  2.         coefplot m`x', keep(t_*) vertical yline(0) ylabel(-2(1)2, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "1st cohort" 2 "2nd cohort" 3 "3rd cohort", angle(45)) ///
+>                 legend(off) nooff name(event_`x', replace) title("") scheme(s1mono)
+  3.         graph export "$MY_TAB/event_`x'.pdf", replace
+  4.         }       
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//event_sport_hrs.pdf saved as PDF format
+
+. 
+.         
+. *** Figure 4: Sports Club Membership by Age
+. preserve
+
+. est drop _all
+
+. keep if $sample
+(3,023 observations deleted)
+
+. keep if $yrs
+(3,493 observations deleted)
+
+. keep LL_sport* kommheard kommgotten sportsclub treat bula_3rd bula year_3rd cityno
+
+. gen id = _n
+
+. reshape long LL_sport, i(id) j(age)
+(j = 5 6 7 8 9 10 11 12)
+
+Data                               Wide   ->   Long
+-----------------------------------------------------------------------------
+Number of observations           13,334   ->   106,672     
+Number of variables                  17   ->   11          
+j variable (8 values)                     ->   age
+xij variables:
+     LL_sport5 LL_sport6 ... LL_sport12   ->   LL_sport
+-----------------------------------------------------------------------------
+
+. 
+. gen tyear = inrange(year_3rd, 2008, 2010)
+
+. gen tbula = bula_3rd == 13
+
+. 
+. gen cnt = 1
+
+. keep if $age
+(0 observations deleted)
+
+. collapse (mean) LL_sport kommheard kommgotten treat sportsclub (rawsum) cnt, by(tbula tyear age)
+
+. 
+. replace LL_sport = LL_sport * 100
+(32 real changes made)
+
+. tw(scatter LL_sport age if $age & tbula == 1 & tyear == 1, ///
+>                 c(l) legend(label(1 "Treatment cohorts")) mcolor(black) lcolor(black)) ///
+>         (scatter LL_sport age if $age & tbula == 1 & tyear == 0, ///
+>                 c(l) legend(label(2 "Control cohorts")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>         ylabel(20(10)60, angle(0)) ytitle("Percent") xline(8.5) xtitle("Age") name(DiD_alt1b, replace) legend(rows(1)) ///
+>         scheme(s1mono) xlabel(5(1)12)
+
+. graph export "$MY_TAB/DiD_alt1.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//DiD_alt1.pdf saved as PDF format
+
+. 
+. tw(scatter LL_sport age if $age & tbula == 1 & tyear == 1, ///
+>                 c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>         (scatter LL_sport age if $age & tbula ==  0 & tyear == 1, ///
+>                 c(l) legend(label(2 "Control states")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>         ylabel(20(10)60, angle(0)) ytitle("Percent") xline(8.5) xtitle("Age") name(DiD_alt2b, replace) legend(rows(1)) ///
+>         scheme(s1mono) xlabel(5(1)12)
+
+. graph export "$MY_TAB/DiD_alt2.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//DiD_alt2.pdf saved as PDF format
+
+. restore 
+
+. 
+. 
+.  
+. **** Figure 5: Suggestive Evidence on Mechanisms
+. 
+. * a) Tried new sport discipline(s)
+. graph bar if $sample & $yrs & bula_3rd == 13, over(v_579) scheme(s1mono) ylabel(, angle(0)) ///
+>         name(bar_579_en, replace) ytitle(Percent)
+
+. graph export "$MY_TAB/bar_579_en.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//bar_579_en.pdf saved as PDF format
+
+. 
+. * b) Could redeem the voucher for desired discipline
+. graph bar if $sample & $yrs & bula_3rd == 13, over(favsport) scheme(s1mono) ylabel(, angle(0)) ///
+>         name(bar_561_en, replace) ytitle(Percent)
+
+. graph export "$MY_TAB/bar_561_en.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//bar_561_en.pdf saved as PDF format
+
+. 
+. * c) Could not afford membership w/o voucher
+. graph bar if $sample & $yrs & bula_3rd == 13, over(v_582) scheme(s1mono) ylabel(, angle(0)) ///
+>         name(bar_582_en, replace) ytitle(Percent)
+
+. graph export "$MY_TAB/bar_582_en.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//bar_582_en.pdf saved as PDF format
+
+. 
+. * d) Parents happy to save money b/c of voucher
+. graph bar if $sample & $yrs & bula_3rd == 13, over(v_583) scheme(s1mono) ylabel(, angle(0)) ///
+>         name(bar_583_en, replace) ytitle(Percent)
+
+. graph export "$MY_TAB/bar_583_en.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//bar_583_en.pdf saved as PDF format
+
+. 
+. * e) Transport as a supply-side barrier
+. sum v_562-v_565 if v_566 != 1
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+       v_562 |        914    .2538293    .4354394          0          1
+       v_563 |        914    .3161926    .4652436          0          1
+       v_564 |        914    .1838074    .3875391          0          1
+       v_565 |        914    .4452954    .4972705          0          1
+
+. graph bar (mean) v_562 (mean) v_563 (mean) v_564 (mean) v_565 if v_566 != 1, ///
+>         bargap(40) scheme(s1mono) name(transportation, replace) ///
+>         legend(order(1 "Foot" 2 "Bike" 3 "Public transport" 4 "Driven by parents") rows(1) size(small) span)    ///
+>         ylabel(/*-0.1(0.05)0.15*/, angle(0) format(%9.1f)) ytitle(Share)
+
+. graph export "$MY_TAB/transportation.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//transportation.pdf saved as PDF format
+
+. 
+. * f) Mode of Transportation (Urban vs. Rural)
+. graph bar (mean) v_562 (mean) v_563 (mean) v_564 (mean) v_565 if v_566 != 1, over(urban, relabel(1 "Rural" 2 "Urban")) ///
+>         /*bargap(40)*/ scheme(s1mono) name(transportation3, replace) ///
+>         legend(order(1 "Foot" 2 "Bike" 3 "Public transport" 4 "Driven by parents") rows(1) size(small) span)    ///
+>         ylabel(0(0.1)0.5, angle(0) format(%9.1f)) ytitle(Share)
+
+. graph export "$MY_TAB/transportation2.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//transportation2.pdf saved as PDF format
+
+. 
+. /*
+> foreach z of varlist v_562-v_565 {
+>         reg `z' urban if v_566 != 1, $vce
+>         }
+> */
+. /*
+> ttest v_562 == v_563 if v_566 != 1
+> ttest v_562 == v_564 if v_566 != 1
+> ttest v_562 == v_565 if v_566 != 1
+> ttest v_563 == v_564 if v_566 != 1
+> ttest v_563 == v_565 if v_566 != 1
+> ttest v_564 == v_565 if v_566 != 1
+> 
+> ttest v_562 == v_563 if v_566 != 1 & urban == 1
+> ttest v_562 == v_564 if v_566 != 1 & urban == 1
+> ttest v_562 == v_565 if v_566 != 1 & urban == 1
+> ttest v_563 == v_564 if v_566 != 1 & urban == 1
+> ttest v_563 == v_565 if v_566 != 1 & urban == 1
+> ttest v_564 == v_565 if v_566 != 1 & urban == 1
+> 
+> ttest v_562 == v_563 if v_566 != 1 & urban == 0
+> ttest v_562 == v_564 if v_566 != 1 & urban == 0
+> ttest v_562 == v_565 if v_566 != 1 & urban == 0
+> ttest v_563 == v_564 if v_566 != 1 & urban == 0
+> ttest v_563 == v_565 if v_566 != 1 & urban == 0
+> ttest v_564 == v_565 if v_566 != 1 & urban == 0
+> */
+. 
+. **** Fig. 6: Supply-Side Restrictions? Number of Sports Clubs per ZIP Code
+. 
+. hist vereine_cat if $sample & $yrs & tbula_3rd == 1 & bula == 13 & einwohner != ., ///
+>         width(1) start(-0.5) scheme(s1mono) fraction ylabel(0(0.05)0.3, angle(0) format(%9.2f)) ///
+>         xlabel(0 "0" 1 "1-5" 2 "6-10" 3 "11-15" 4 "16-20" 5 "21-30" 6 "31-40" 7 ">40") ///
+>         xtitle("Sports clubs per ZIP code", margin(0 0 0 4)) name(clubs, replace) ytitle("Proportion")
+(bin=8, start=-.5, width=1)
+
+. graph export "$MY_TAB/clubs.pdf", as(png) replace       
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//clubs.pdf not found)
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//clubs.pdf saved as PNG format
+
+. 
+. hist sparten_cat if $sample & $yrs & tbula_3rd == 1 & bula == 13 & einwohner != ., ///
+>         width(1) start(-0.5) scheme(s1mono) fraction ylabel(0(0.05)0.25, angle(0) format(%9.2f)) ///
+>         xlabel(0 "0" 1 "1-10" 2 "11-20" 3 "21-30" 4 "31-40" 5 "41-50" 6 "51-60" 7 ">60") ///
+>         xtitle("Sports club disciplines per ZIP code", margin(0 0 0 4)) name(divisions, replace) ytitle("Proportion")
+(bin=8, start=-.5, width=1)
+
+. graph export "$MY_TAB/divisions.pdf", as(png) replace   
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//divisions.pdf not found)
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//divisions.pdf saved as PNG format
+
+. 
+. 
+. 
+. **** Figure 7: Further Outcomes
+. 
+. * a) Placebo Outcomes
+. eststo clear
+
+. foreach x in $controls {
+  2.         rename treat treat_`x'
+  3.         eststo `x': qui reg `x' treat_`x' $fe3 i.cityno if $sample & $yrs, $vce
+  4.         rename treat_`x' treat
+  5. }
+
+. coefplot "$controls", ///
+>         keep(treat_*) vertical yline(0) xlabel(1 "Female" 2 "Has siblings" 3 "Born in Germany" 4 "Parent not born in Germany" ///
+>         5 "Newspaper at home" 6 "Art at home" 7 "Academic track"  ///
+>         8 "Sports club (age 4-7)" 9 "Music (age 4-7)" ///
+>         , angle(45)) legend(off) nooff ylabel(-0.1(0.05)0.1, angle(0) format(%9.2f)) scheme(s1mono)
+
+. graph export "$MY_TAB/placebo.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//placebo.pdf saved as PDF format
+
+. 
+. 
+. * b) Additional outcomes
+. eststo clear
+
+. foreach x in $further {
+  2.         rename treat treat_`x'
+  3.         eststo `x': qui reg `x' treat_`x' $fe3 i.cityno if $sample & $yrs, $vce
+  4.         rename treat_`x' treat
+  5. }
+
+. coefplot "$further", ///
+>         keep(treat_*) vertical yline(0) xlabel(, angle(45)) ///
+>          legend(off) nooff ylabel(-0.1(0.05)0.1, format(%9.2f) angle(0)) scheme(s1mono) ///
+>         xlabel(1 "Does sport" 2 "At least 2 hrs sports/week" 3 "At least 3 hrs sports/week" 4 "Sport is important" 5 "Very good health" ///
+>                 6 "Overweight (BMI > 25)" 7 "Ever smoked cigarettes" 8 "Current smoker" 9 "Ever consumed alcohol" 10 "Consumed alcohol in last 7 days", angle(45)) ///
+>                 name(further, replace)
+
+. graph export "$MY_TAB/further.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//further.pdf saved as PDF format
+
+. 
+. 
+. 
+. *****************************************************************
+. *
+. * Graphs: Appendix
+. *
+. *****************************************************************
+. 
+. 
+. **** Figure A2: YOLO Sampling and Sample Size
+. count
+  19,850
+
+. local n1 = r(N)
+
+. count if target == 1
+  19,095
+
+. local n2 = r(N)
+
+. disp `n2'/`n1' * 100
+96.196474
+
+. *count if target == 1 & inlist(bula_3rd, 4, 13, 16)
+. *local n3 = r(N)
+. *disp `n3'/`n2' * 100
+. count if target == 1 & inlist(bula_3rd, 4, 13, 16) & inrange(year_3rd, 2006, 2011)
+  16,828
+
+. local n4 = r(N)
+
+. disp `n4'/`n2' * 100
+88.127782
+
+. count if target == 1 & inlist(bula_3rd, 4, 13, 16) & inrange(year_3rd, 2006, 2011) & nonmiss == 1
+  16,082
+
+. local n5 = r(N)
+
+. disp `n5'/`n4' * 100
+95.566912
+
+. count if target == 1 & inlist(bula_3rd, 4, 13, 16) & inrange(year_3rd, 2006, 2010) & nonmiss == 1
+  13,334
+
+. local n6 = r(N)
+
+. disp `n6'/`n5' * 100
+82.912573
+
+. 
+. 
+. *** A.4: Duration of survey in our sample
+. *sum duration if $sample & $yrs, d
+. hist duration if $sample & $yrs, scheme(s1mono) frac ylabel(, angle(0)) name(hist_dur, replace)
+(bin=40, start=6.8166666, width=4.7454166)
+
+. graph export "$MY_TAB/hist_dur.pdf", replace
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//hist_dur.pdf saved as PDF format
+
+. 
+. 
+. 
+. 
+. 
+. *** Figure B1: Sports Disciplines for which Vouchers Were Redeemed
+. 
+. tab v_560_2, sort
+
+   Sports discipline for which |
+          voucher was redeemed |      Freq.     Percent        Cum.
+-------------------------------+-----------------------------------
+                   26. Fußball |        161       20.18       20.18
+                31. Kampfsport |         95       11.90       32.08
+                 45. Schwimmen |         95       11.90       43.98
+                  29. Handball |         54        6.77       50.75
+            35. Leichtathletik |         50        6.27       57.02
+                    56. Turnen |         42        5.26       62.28
+                    50. Tanzen |         37        4.64       66.92
+                 12. Badminton |         29        3.63       70.55
+                57. Volleyball |         24        3.01       73.56
+               53. Tischtennis |         21        2.63       76.19
+               59. Wassersport |         19        2.38       78.57
+                14. Basketball |         13        1.63       80.20
+                    39. Reiten |         13        1.63       81.83
+                    52. Tennis |         13        1.63       83.46
+6. Alles was man machen konnte |         12        1.50       84.96
+                    30. Hockey |         11        1.38       86.34
+             11. Ausdauersport |          9        1.13       87.47
+                   24. Fitness |          9        1.13       88.60
+               61. Wintersport |          7        0.88       89.47
+                  4. Akrobatik |          6        0.75       90.23
+                 21. Eislaufen |          6        0.75       90.98
+                  34. Klettern |          6        0.75       91.73
+                   16. Bowling |          5        0.63       92.36
+             41. Rollkunstlauf |          5        0.63       92.98
+               44. Schießsport |          5        0.63       93.61
+                    46. Skaten |          5        0.63       94.24
+                    38. Radeln |          4        0.50       94.74
+                58. Wasserball |          4        0.50       95.24
+                    2. Aerobic |          3        0.38       95.61
+               33. Kindersport |          3        0.38       95.99
+                 54. Trampolin |          3        0.38       96.37
+              18. Breitensport |          2        0.25       96.62
+                 20. Eishockey |          2        0.25       96.87
+                 22. Faustball |          2        0.25       97.12
+         36. Orientierungslauf |          2        0.25       97.37
+             42. Rope Skipping |          2        0.25       97.62
+                    43. Schach |          2        0.25       97.87
+             47. Spielmannszug |          2        0.25       98.12
+            63. Zweifelderball |          2        0.25       98.37
+                     9. Angeln |          1        0.13       98.50
+                  10. Artistik |          1        0.13       98.62
+                 13. Ballsport |          1        0.13       98.75
+                 23. Feuerwehr |          1        0.13       98.87
+                 25. Floorball |          1        0.13       99.00
+                      28. Golf |          1        0.13       99.12
+                   37. Radball |          1        0.13       99.25
+                   40. Rhönrad |          1        0.13       99.37
+            48. Sportakrobatik |          1        0.13       99.50
+              49. Step Aerobic |          1        0.13       99.62
+                   51. Tauchen |          1        0.13       99.75
+              55. Turmspringen |          1        0.13       99.87
+            60. Wasserspringen |          1        0.13      100.00
+-------------------------------+-----------------------------------
+                         Total |        798      100.00
+
+. 
+. 
+. 
+. *** Figure B2: Development of Outcome Variables—Synthetic Control Group
+. * --> see 03_synthetic_control
+. 
+. 
+. 
+. *** Figure B3: Outcome Difference—Treatment vs. Control States
+. 
+. foreach y of numlist 2006/2010 {
+  2.         qui gen t`y' = year_3rd == `y' & tbula_3rd == 1
+  3.         }
+
+. /*
+> foreach x of varlist kommheard kommgotten kommused {
+>         qui replace `x' = `x' * 100
+>         eststo d`x': qui reg `x' t2??? i.year_3rd  if $sample & $yrs, $vce
+>         coefplot d`x', keep(t2???) vertical yline(0) ylabel(0(10)50, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "2006/07" 2 "2007/08" 3 "2008/09" 4 "2009/10" 5 "2010/11", angle(45)) ///
+>                 xline(2.5) xline(5.5) yline(0) ///
+>                 legend(off) nooff name(diff`x', replace) title("") scheme(s1mono)
+>         graph export "$MY_TAB/diff`x'.pdf", replace
+>         qui replace `x' = `x' / 100
+>         }*/     
+. foreach x of varlist sportsclub oweight {
+  2.         qui replace `x' = `x' * 100
+  3.         eststo d`x': qui reg `x' t2??? i.year_3rd  if $sample & $yrs, $vce
+  4.         coefplot d`x', keep(t2???) vertical yline(0) ylabel(-8(2)7, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "2006/07" 2 "2007/08" 3 "2008/09" 4 "2009/10" 5 "2010/11", angle(45)) ///
+>                 xline(2.5) xline(5.5) yline(0) ///
+>                 legend(off) nooff name(diff`x', replace) title("") scheme(s1mono)
+  5.         graph export "$MY_TAB/diff`x'.pdf", replace
+  6.         qui replace `x' = `x' / 100
+  7.         }       
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//diffsportsclub.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//diffoweight.pdf saved as PDF format
+
+. foreach x of varlist sport_hrs {
+  2.         eststo d`x': qui reg `x' t2??? i.year_3rd  if $sample & $yrs, $vce
+  3.         coefplot d`x', keep(t2???) vertical yline(0) ylabel(-0.7(0.2)0.9, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "2006/07" 2 "2007/08" 3 "2008/09" 4 "2009/10" 5 "2010/11", angle(45)) ///
+>                 xline(2.5) xline(5.5) yline(0) ///
+>                 legend(off) nooff name(diff`x', replace) title("") scheme(s1mono)
+  4.         graph export "$MY_TAB/diff`x'.pdf", replace
+  5.         }       
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//diffsport_hrs.pdf saved as PDF format
+
+. 
+. 
+. 
+end of do-file
+
+. do      $DO/03_synthetic_control.do             
+
+. 
+. 
+. *******
+. * This dofile constructs a synthetic control group based on entropy balancing
+. * Proceeding
+. * 1. Clean data
+. * 2. Generate weights
+. * 3. Actual analysis
+. *   - Figure B2: Development of Outcome Variables—Synthetic Control Group
+. *   - Figure B3: Outcome Difference—Treatment vs. Control States (part 2)
+. *   - Table 7: Synthetic Control Group Results
+. 
+. 
+. use     ${DATA_IN}MSZ_main-data.dta, clear
+
+. 
+. gen     wgt = 1
+
+. label   var wgt "Uniform weight"
+
+. 
+. ****************************
+. *
+. * 1. Cleaning the data
+. *
+. ****************************
+. 
+. keep    if $sample & $yrs
+(6,516 observations deleted)
+
+. keep    if bula_3rd == bula // keep only those who did not move states between grade 3 and the time of survey (in order to get a balanced sample; 409 observations deleted)
+(409 observations deleted)
+
+. 
+. gen     wrong = .
+(12,925 missing values generated)
+
+. replace wrong = 1 if cityno==1 & year_3rd==2007 &  bula_3rd==16
+(2 real changes made)
+
+. replace wrong = 1 if cityno==34 & bula_3rd==16
+(2 real changes made)
+
+. replace wrong = 1 if cityno==53 & bula_3rd==4
+(5 real changes made)
+
+. replace wrong = 1 if cityno==70 & bula_3rd==13
+(1 real change made)
+
+. drop    if wrong == 1
+(10 observations deleted)
+
+. * in some cases, the municipality does not match the correct federal states; these cases are dropped (10 observations)
+. 
+. save    ${DATA_OUT}ebw_prep.dta, replace
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/out-data/ebw_prep.dta not found)
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/out-data/ebw_prep.dta saved
+
+. 
+. 
+. 
+. ****************************
+. *
+. * Synthetic control (via ebalance)
+. *
+. ****************************
+. 
+. * Aggregating by cohort-city 
+. collapse (mean) $out $controls urban treat bula_3rd (sum) wgt, by(year_3rd cityno)
+
+. 
+. * Generating a balanced panel at the city level (14 observations deleted)
+. bysort cityno: gen x = _N
+
+. drop if x != 5 
+(14 observations deleted)
+
+. 
+. * Reshaping
+. reshape wide $out $controls urban treat wgt, i(cityno) j(year)
+(j = 2006 2007 2008 2009 2010)
+
+Data                               Long   ->   Wide
+-----------------------------------------------------------------------------
+Number of observations              435   ->   87          
+Number of variables                  22   ->   93          
+j variable (5 values)          year_3rd   ->   (dropped)
+xij variables:
+                              kommheard   ->   kommheard2006 kommheard2007 ... kommheard2010
+                             kommgotten   ->   kommgotten2006 kommgotten2007 ... kommgotten2010
+                               kommused   ->   kommused2006 kommused2007 ... kommused2010
+                             sportsclub   ->   sportsclub2006 sportsclub2007 ... sportsclub2010
+                              sport_hrs   ->   sport_hrs2006 sport_hrs2007 ... sport_hrs2010
+                                oweight   ->   oweight2006 oweight2007 ... oweight2010
+                                 female   ->   female2006 female2007 ... female2010
+                               siblings   ->   siblings2006 siblings2007 ... siblings2010
+                           born_germany   ->   born_germany2006 born_germany2007 ... born_germany2010
+                      parent_nongermany   ->   parent_nongermany2006 parent_nongermany2007 ... parent_nongermany2010
+                              newspaper   ->   newspaper2006 newspaper2007 ... newspaper2010
+                            art_at_home   ->   art_at_home2006 art_at_home2007 ... art_at_home2010
+                          academictrack   ->   academictrack2006 academictrack2007 ... academictrack2010
+                         sportsclub_4_7   ->   sportsclub_4_72006 sportsclub_4_72007 ... sportsclub_4_72010
+                              music_4_7   ->   music_4_72006 music_4_72007 ... music_4_72010
+                                  urban   ->   urban2006 urban2007 ... urban2010
+                                  treat   ->   treat2006 treat2007 ... treat2010
+                                    wgt   ->   wgt2006 wgt2007 ... wgt2010
+-----------------------------------------------------------------------------
+
+. 
+. egen    wgt = rowmean(wgt20??)
+
+. gen     treat = treat2008
+
+. drop    treat???? wgt20?? *2008 *2009 *2010
+
+. 
+. ebalance treat  sportsclub2007 sport_hrs2007 oweight2007 sportsclub2006 sport_hrs2006 oweight2006, ///
+>                                 basewt(wgt) targets(1) wttreat /*tolerance(.001)*/ gen(ebw1)
+
+
+Data Setup
+Treatment variable:   treat
+Covariate adjustment: sportsclub2007 sport_hrs2007 oweight2007 sportsclub2006 sport_hrs2006 oweight2006 
+
+Optimizing...
+Iteration 1: Max Difference = 5148.46137
+Iteration 2: Max Difference = 1892.91979
+Iteration 3: Max Difference = 695.274341
+Iteration 4: Max Difference = 254.688912
+Iteration 5: Max Difference = 92.6166164
+Iteration 6: Max Difference = 33.0203548
+Iteration 7: Max Difference = 11.1656802
+Iteration 8: Max Difference = 3.29122391
+Iteration 9: Max Difference = .700319323
+Iteration 10: Max Difference = .073340282
+Iteration 11: Max Difference = .001474367
+maximum difference smaller than the tolerance level; convergence achieved
+
+
+Treated units: 30      total of weights: 1422
+Control units: 57      total of weights: 1422
+
+
+Before: wgt as the weighting variable
+
+             |              Treat              |             Control             
+             |      mean   variance   skewness |      mean   variance   skewness 
+-------------+---------------------------------+--------------------------------
+sports~b2007 |     .3428    .006754     .02368 |     .3609     .01344      -.405 
+sport_h~2007 |     4.141      .4319     -.6903 |      4.47      .6907     .03169 
+ oweight2007 |     .1707    .002122      .2409 |     .2013     .01236      .5735 
+sports~b2006 |     .3126     .01389      2.087 |     .3143      .0237      .5533 
+sport_h~2006 |     4.262      1.246      1.627 |     4.223      2.056      .8295 
+ oweight2006 |        .2     .01206      3.617 |     .2098     .02274      1.406 
+
+
+After:  ebw1 as the weighting variable
+
+             |              Treat              |             Control             
+             |      mean   variance   skewness |      mean   variance   skewness 
+-------------+---------------------------------+--------------------------------
+sports~b2007 |     .3428    .006754     .02368 |     .3428     .01737     -.7094 
+sport_h~2007 |     4.141      .4319     -.6903 |     4.141      .8169     -.5568 
+ oweight2007 |     .1707    .002122      .2409 |     .1707     .01085      .6805 
+sports~b2006 |     .3126     .01389      2.087 |     .3126      .0292      1.137 
+sport_h~2006 |     4.262      1.246      1.627 |     4.262      1.888      1.261 
+ oweight2006 |        .2     .01206      3.617 |        .2     .02705      1.638 
+
+. ebalance treat  sportsclub2007 sport_hrs2007 oweight2007 sportsclub2006 sport_hrs2006 oweight2006 ///
+>                                 female2007 urban2007 sportsclub_4_72007 academictrack2007 art_at_home2007, ///
+>                                 basewt(wgt) targets(1) wttreat /*tolerance(1.1)*/ gen(ebw2)
+
+
+Data Setup
+Treatment variable:   treat
+Covariate adjustment: sportsclub2007 sport_hrs2007 oweight2007 sportsclub2006 sport_hrs2006 oweight2006 female2007 urban2007 sportsclub_4_72007 academictrack2007 art_at_home200
+> 7 
+
+Optimizing...
+Iteration 1: Max Difference = 5148.46137
+Iteration 2: Max Difference = 1892.92037
+Iteration 3: Max Difference = 695.276122
+Iteration 4: Max Difference = 254.693819
+Iteration 5: Max Difference = 92.6298906
+Iteration 6: Max Difference = 33.0557634
+Iteration 7: Max Difference = 11.2569355
+Iteration 8: Max Difference = 3.50419304
+Iteration 9: Max Difference = 1.07220632
+Iteration 10: Max Difference = .418251724
+Iteration 11: Max Difference = .168053332
+Iteration 12: Max Difference = .034319091
+Iteration 13: Max Difference = .001261341
+maximum difference smaller than the tolerance level; convergence achieved
+
+
+Treated units: 30      total of weights: 1422
+Control units: 57      total of weights: 1422
+
+
+Before: wgt as the weighting variable
+
+             |              Treat              |             Control             
+             |      mean   variance   skewness |      mean   variance   skewness 
+-------------+---------------------------------+--------------------------------
+sports~b2007 |     .3428    .006754     .02368 |     .3609     .01344      -.405 
+sport_h~2007 |     4.141      .4319     -.6903 |      4.47      .6907     .03169 
+ oweight2007 |     .1707    .002122      .2409 |     .2013     .01236      .5735 
+sports~b2006 |     .3126     .01389      2.087 |     .3143      .0237      .5533 
+sport_h~2006 |     4.262      1.246      1.627 |     4.223      2.056      .8295 
+ oweight2006 |        .2     .01206      3.617 |     .2098     .02274      1.406 
+  female2007 |      .547    .008315     .06738 |     .5568     .01754     -1.003 
+   urban2007 |     .7606      .1884     -1.221 |     .4214      .2482      .3183 
+sports~72007 |     .4942    .008459     -2.456 |     .5197     .01692      .1335 
+academi~2007 |     .3329    .005435      2.808 |     .3078     .02111      .5018 
+art_at_~2007 |     .7211    .005399     -1.063 |     .6906     .02003     -.2973 
+
+
+After:  ebw2 as the weighting variable
+
+             |              Treat              |             Control             
+             |      mean   variance   skewness |      mean   variance   skewness 
+-------------+---------------------------------+--------------------------------
+sports~b2007 |     .3428    .006754     .02368 |     .3427     .01542     -2.023 
+sport_h~2007 |     4.141      .4319     -.6903 |      4.14      .4431     -.9139 
+ oweight2007 |     .1707    .002122      .2409 |     .1707    .007278      .6192 
+sports~b2006 |     .3126     .01389      2.087 |     .3126     .01049      -.298 
+sport_h~2006 |     4.262      1.246      1.627 |     4.262      .6739       2.35 
+ oweight2006 |        .2     .01206      3.617 |        .2      .0142      .3652 
+  female2007 |      .547    .008315     .06738 |      .547     .01697     -1.173 
+   urban2007 |     .7606      .1884     -1.221 |     .7604      .1855      -1.22 
+sports~72007 |     .4942    .008459     -2.456 |     .4942    .008417      -.566 
+academi~2007 |     .3329    .005435      2.808 |     .3329     .01825       1.95 
+art_at_~2007 |     .7211    .005399     -1.063 |     .7211     .01405      1.048 
+
+. ebalance treat  sportsclub2007 sport_hrs2007 oweight2007 sportsclub2006 sport_hrs2006 oweight2006 ///
+>                                 female2007 siblings2007 born_germany2007 parent_nongermany2007 newspaper2007 art_at_home2007 academictrack2007 sportsclub_4_72007 music_4_7200
+> 7, ///
+>                                 basewt(wgt) targets(1) wttreat tolerance(1.1) gen(ebw3)
+
+
+Data Setup
+Treatment variable:   treat
+Covariate adjustment: sportsclub2007 sport_hrs2007 oweight2007 sportsclub2006 sport_hrs2006 oweight2006 female2007 siblings2007 born_germany2007 parent_nongermany2007 newspaper
+> 2007 art_at_home2007 academictrack2007 sportsclub_4_72007 music_4_72007 
+
+Optimizing...
+Iteration 1: Max Difference = 5148.46137
+Iteration 2: Max Difference = 1892.92071
+Iteration 3: Max Difference = 695.277176
+Iteration 4: Max Difference = 254.696726
+Iteration 5: Max Difference = 92.6377518
+Iteration 6: Max Difference = 33.0767395
+Iteration 7: Max Difference = 11.3111872
+Iteration 8: Max Difference = 3.63366093
+Iteration 9: Max Difference = 1.33886336
+Iteration 10: Max Difference = 1.09258234
+maximum difference smaller than the tolerance level; convergence achieved
+
+
+Treated units: 30      total of weights: 1422
+Control units: 57      total of weights: 1422
+
+
+Before: wgt as the weighting variable
+
+             |              Treat              |             Control             
+             |      mean   variance   skewness |      mean   variance   skewness 
+-------------+---------------------------------+--------------------------------
+sports~b2007 |     .3428    .006754     .02368 |     .3609     .01344      -.405 
+sport_h~2007 |     4.141      .4319     -.6903 |      4.47      .6907     .03169 
+ oweight2007 |     .1707    .002122      .2409 |     .2013     .01236      .5735 
+sports~b2006 |     .3126     .01389      2.087 |     .3143      .0237      .5533 
+sport_h~2006 |     4.262      1.246      1.627 |     4.223      2.056      .8295 
+ oweight2006 |        .2     .01206      3.617 |     .2098     .02274      1.406 
+  female2007 |      .547    .008315     .06738 |     .5568     .01754     -1.003 
+siblings2007 |     .8776      .0034     -.4825 |     .8321     .00971     -.3854 
+born_ge~2007 |     .9467    .001268     -1.963 |      .963     .00209     -.9697 
+parent_~2007 |     .1326    .003525    -.02705 |     .1105    .005846      .4683 
+newspap~2007 |     .5226    .007425      3.099 |     .6104     .01469     -.2558 
+art_at_~2007 |     .7211    .005399     -1.063 |     .6906     .02003     -.2973 
+academi~2007 |     .3329    .005435      2.808 |     .3078     .02111      .5018 
+sports~72007 |     .4942    .008459     -2.456 |     .5197     .01692      .1335 
+music_~72007 |     .4597     .01215     -.9008 |     .4203     .02154     -.1096 
+
+
+After:  ebw3 as the weighting variable
+
+             |              Treat              |             Control             
+             |      mean   variance   skewness |      mean   variance   skewness 
+-------------+---------------------------------+--------------------------------
+sports~b2007 |     .3428    .006754     .02368 |     .3401     .02572     -.9597 
+sport_h~2007 |     4.141      .4319     -.6903 |     4.186      1.233      -.302 
+ oweight2007 |     .1707    .002122      .2409 |     .1785     .01566      1.274 
+sports~b2006 |     .3126     .01389      2.087 |     .3123     .04308      1.171 
+sport_h~2006 |     4.262      1.246      1.627 |     4.288      1.878      1.854 
+ oweight2006 |        .2     .01206      3.617 |      .202     .02495      .1769 
+  female2007 |      .547    .008315     .06738 |       .55     .02668      .3177 
+siblings2007 |     .8776      .0034     -.4825 |     .8675    .009475      -.678 
+born_ge~2007 |     .9467    .001268     -1.963 |     .9526      .0033     -.7376 
+parent_~2007 |     .1326    .003525    -.02705 |     .1273    .007461     -.2413 
+newspap~2007 |     .5226    .007425      3.099 |     .5428     .01663    -.05088 
+art_at_~2007 |     .7211    .005399     -1.063 |     .7175      .0253     .09987 
+academi~2007 |     .3329    .005435      2.808 |     .3266      .0157      .8379 
+sports~72007 |     .4942    .008459     -2.456 |     .4962     .01993     -.3319 
+music_~72007 |     .4597     .01215     -.9008 |     .4514     .03029      1.161 
+
+. 
+.                                 
+. keep    cityno ebw?     
+
+. save    ${DATA_OUT}komm_ebw.dta, replace
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/out-data/komm_ebw.dta not found)
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/out-data/komm_ebw.dta saved
+
+. 
+. 
+. ****************************
+. *
+. * Analyses
+. *
+. ****************************
+. est     drop _all
+
+. use     ${DATA_OUT}ebw_prep.dta, clear
+
+. gen     cnt = 1
+
+. 
+. ***
+. * Aggregating by cohort-city 
+. collapse (mean) $out treat bula_3rd tbula (sum) cnt, by(year_3rd cityno)
+
+. 
+. * Generating a balanced panel at the city level
+. bysort  cityno: gen x = _N
+
+. drop    if x != 5
+(14 observations deleted)
+
+. 
+. * merge the synthetic control group weights
+. merge   m:1 cityno using ${DATA_OUT}komm_ebw.dta, assert(3)
+
+    Result                      Number of obs
+    -----------------------------------------
+    Not matched                             0
+    Matched                               435  (_merge==3)
+    -----------------------------------------
+
+. 
+. 
+. 
+. ****
+. * Figure B2: Development of Outcome Variables—Synthetic Control Group
+. foreach vers of numlist 2 {
+  2.         preserve 
+  3.         collapse (mean) $out [aw=ebw`vers'], by(tbula year_3rd)
+  4. 
+.         foreach x of varlist kommheard kommgotten kommused {
+  5.                 qui replace `x' = `x' * 100
+  6.                 tw(scatter `x' year_3rd if $yrs & tbula == 1, ///
+>                                 c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>                         (scatter `x' year_3rd if $yrs & tbula == 0, ///
+>                                 c(l) legend(label(2 "Synthetic control")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>                         xline(2007.5) xline(2010.5) xlabel(, labels valuelabel) xtitle("")  ///
+>                                 ylabel(0(10)50, angle(0)) ytitle("Percent") ///
+>                                 name(Synth`vers'_`x', replace) legend(rows(1)) scheme(s1mono) /*title("${l`x'}", position(11) ring(0))*/ 
+  7.                 graph export "$MY_TAB/Synth`vers'_`x'.pdf", replace
+  8.                 qui replace `x' = `x' / 100
+  9.         }
+ 10. 
+.         foreach x of varlist sportsclub {
+ 11.                 qui replace `x' = `x' * 100
+ 12.                 tw(scatter `x' year_3rd if $yrs & tbula == 1, ///
+>                                 c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>                         (scatter `x' year_3rd if $yrs & tbula == 0, ///
+>                                 c(l) legend(label(2 "Synthetic control")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>                         xline(2007.5) xline(2010.5) xlabel(, labels valuelabel) xtitle("")  ///
+>                                 ylabel(25(5)55, angle(0)) ytitle("Percent") ///
+>                                 name(Synth`vers'_`x', replace) legend(rows(1)) scheme(s1mono) /*title("${l`x'}", position(11) ring(0))*/ 
+ 13.                 graph export "$MY_TAB/Synth`vers'_`x'.pdf", replace
+ 14.                 qui replace `x' = `x' / 100
+ 15.         }
+ 16.         foreach x of varlist sport_hrs  {
+ 17.                 tw(scatter `x' year_3rd if $yrs & tbula == 1, ///
+>                                 c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>                         (scatter `x' year_3rd if $yrs & tbula == 0, ///
+>                                 c(l) legend(label(2 "Synthetic control")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>                         xline(2007.5) xline(2010.5) xlabel(, labels valuelabel) xtitle("")  ///
+>                                 ylabel(3(0.5)6, angle(0)) ytitle("Hours per week") ///
+>                                 name(Synth`vers'_`x', replace) legend(rows(1)) scheme(s1mono) /*title("${l`x'}", position(11) ring(0))*/
+ 18.                 graph export "$MY_TAB/Synth`vers'_`x'.pdf", replace
+ 19.         }
+ 20.         foreach x of varlist oweight  {
+ 21.                 qui replace `x' = `x' * 100
+ 22.                 tw(scatter `x' year_3rd if $yrs & tbula == 1, ///
+>                                 c(l) legend(label(1 "Treatment state")) mcolor(black) lcolor(black)) ///
+>                         (scatter `x' year_3rd if $yrs & tbula == 0, ///
+>                                 c(l) legend(label(2 "Synthetic control")) mcolor(gs8) msymbol(diamond) lcolor(gs8) lpattern(dash)), ///
+>                         xline(2007.5) xline(2010.5) xlabel(, labels valuelabel) xtitle("")  ///
+>                                 ylabel(0(5)25, angle(0)) ytitle("Percent") ///
+>                                 name(Synth`vers'_`x', replace) legend(rows(1)) scheme(s1mono) /*title("${l`x'}", position(11) ring(0))*/ 
+ 23.                 graph export "$MY_TAB/Synth`vers'_`x'.pdf", replace
+ 24.                 qui replace `x' = `x' / 100
+ 25.         }
+ 26.         restore
+ 27. }
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//Synth2_kommheard.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//Synth2_kommgotten.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//Synth2_kommused.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//Synth2_sportsclub.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//Synth2_sport_hrs.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//Synth2_oweight.pdf saved as PDF format
+
+. 
+. 
+. 
+. *********
+. * Figure B3: Outcome Difference—Treatment vs. Control State (part 2)
+. foreach y of numlist 2006/2010 {
+  2.         qui gen t`y' = year_3rd == `y' & bula_3rd == 13
+  3.         }
+
+. /*
+> foreach x of varlist kommheard kommgotten kommused {
+>         qui replace `x' = `x' * 100
+>         eststo d`x': qui reg `x' t2??? i.year_3rd [aw=ebw1], $vce
+>         coefplot d`x', keep(t2???) vertical yline(0) ylabel(0(10)50, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "2006/07" 2 "2007/08" 3 "2008/09" 4 "2009/10" 5 "2010/11", angle(45) /*labsize(vsmall)*/) ///
+>                 xline(2.5) xline(5.5) yline(0) ///
+>                 legend(off) nooff name(diffsynth`x', replace) title("") scheme(s1mono)
+>         graph export "$MY_TAB/diffsynth`x'.pdf", replace
+>         qui replace `x' = `x' / 100
+>         }       
+> */
+. foreach x of varlist oweight sportsclub {
+  2.         qui replace `x' = `x' * 100
+  3.         eststo d`x': qui reg `x' t2??? i.year_3rd [aw=ebw1], $vce
+  4.         coefplot d`x', keep(t2???) vertical yline(0) ylabel(-8(2)7, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "2006/07" 2 "2007/08" 3 "2008/09" 4 "2009/10" 5 "2010/11", angle(45) /*labsize(vsmall)*/) ///
+>                 xline(2.5) xline(5.5) yline(0) ///
+>                 legend(off) nooff name(diffsynth`x', replace) title("") scheme(s1mono)
+  5.         graph export "$MY_TAB/diffsynth`x'.pdf", replace
+  6.         qui replace `x' = `x' / 100
+  7.         }       
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//diffsynthoweight.pdf saved as PDF format
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//diffsynthsportsclub.pdf saved as PDF format
+
+. foreach x of varlist sport_hrs {
+  2.         eststo d`x': qui reg `x' t2??? i.year_3rd [aw=ebw1], $vce
+  3.         coefplot d`x', keep(t2???) vertical yline(0) ylabel(-0.7(0.2)0.9, angle(0) format(%9.1f))  ///
+>                 xlabel(1 "2006/07" 2 "2007/08" 3 "2008/09" 4 "2009/10" 5 "2010/11", angle(45) /*labsize(vsmall)*/) ///
+>                 xline(2.5) xline(5.5) yline(0) ///
+>                 legend(off) nooff name(diffsynth`x', replace) title("") scheme(s1mono)
+  4.         graph export "$MY_TAB/diffsynth`x'.pdf", replace
+  5.         }       
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//diffsynthsport_hrs.pdf saved as PDF format
+
+. 
+.         
+. 
+. gen tbula = bula_3rd == 13
+
+. gen tcoh = inrange(year_3rd, 2008, 2010)
+
+. 
+. save    ${DATA_OUT}ebw_fin.dta, replace
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/out-data/ebw_fin.dta not found)
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/out-data/ebw_fin.dta saved
+
+. 
+. 
+. ******
+. * Table 6: Synthetic Control Group Results
+. foreach x of varlist $out {
+  2.         qui reg `x' treat i.year_3rd i.bula_3rd i.cityno [aw=ebw1], $vce
+  3.         est store ebw1_`x'
+  4.         qui reg `x' treat i.year_3rd i.bula_3rd i.cityno [aw=ebw2], $vce
+  5.         est store ebw2_`x'
+  6.         }
+
+. 
+. global lkommheard "Program known"
+
+. global lkommgotten "Voucher gotten"
+
+. global lkommused "Voucher used"
+
+. global lsportsclub "Member in sports club"
+
+. global lsport_hrs "Weekly hours of sports"
+
+. global loweight "Overweight"
+
+. 
+. cap erase "$MY_TAB/ebw_main.tex"
+
+. foreach x of varlist $out {
+  2.         estout ebw*_`x' using "$MY_TAB/ebw_main.tex", ///
+>                  cells(b(fmt(3) star) se(par fmt(3))) keep(treat) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "Voucher") varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append prehead(\addlinespace \multicolumn{3}{l}{\textbf{${l`x'}}} \\) 
+  3.                 }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//ebw_main.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//ebw_main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//ebw_main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//ebw_main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//ebw_main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//ebw_main.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//ebw_main.tex)
+
+. foreach x of varlist kommheard {
+  2.         estout ebw*_`x' using "$MY_TAB/ebw_main.tex", ///
+>                  cells("") keep("") stats(N, fmt(0)) style(tex) ///
+>                  starlevels(* 0.10 ** 0.05 *** 0.01) varwidth(7) ///
+>                  eqlabels(none) mlabels(none) collabels(none) append  prehead(\addlinespace)
+  3.                 }
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//ebw_main.tex)
+
+. 
+. 
+end of do-file
+
+. do      $DO/04_power.do
+
+. 
+. * This dofile produces the results for Tables B6 and B7 
+. * (relating to power simulations and limits of confidence intervalls)
+. 
+. 
+. *******
+. * setting the specification
+. global effect "3/5"
+
+. global rep 1000
+
+. 
+. ******************************
+. *** Table B6: Limits of Confidence Intervals
+. 
+. ******
+. use     ${DATA_IN}MSZ_main-data.dta, clear
+
+. foreach x of varlist sportsclub sport_hrs oweight {
+  2.         qui reg `x' treat tbula_3rd tcoh if $sample & $yrs, $vce
+  3.         est store p1_`x'
+  4.         qui reg `x' treat i.year_3rd i.bula_3rd i.cityno if $sample & $yrs, $vce
+  5.         est store p2_`x'
+  6.         qui reg `x' treat $fe3 if $sample & inrange(year_3rd, 2006, 2011), $vce
+  7.         est store p4_`x'
+  8. }
+
+. 
+. 
+. ******
+. * Synthetic Control Group Results
+. use     ${DATA_OUT}ebw_fin.dta, clear
+
+. foreach x of varlist sportsclub sport_hrs oweight {
+  2.         qui reg `x' treat i.year_3rd i.bula_3rd i.cityno [aw=ebw1], $vce
+  3.         est store p3_`x'
+  4.         }
+
+. 
+. global lkommheard "Program known"
+
+. global lkommgotten "Voucher received"
+
+. global lkommused "Voucher redeemed"
+
+. global lsportsclub "Member of sports club"
+
+. global lsport_hrs "Weekly hours of sport"
+
+. global loweight "Overweight"
+
+. 
+. * 95 % confidence interval (one-sided)
+. cap erase "$MY_TAB/power1a.tex"
+
+. foreach z of numlist 1/4 {
+  2.         foreach x of varlist sportsclub sport_hrs oweight {
+  3.                 estout p`z'_`x' using "$MY_TAB/power1a.tex", ///
+>                          cells("b(fmt(3)) ci(fmt(3))" se(par fmt(3))) keep(treat) style(tex) ///
+>                          starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "${l`x'}") varwidth(27) level(90) ///
+>                          eqlabels(none) mlabels(none) collabels(none) append /*prehead(\addlinespace \multicolumn{1}{l}{\textbf{${l`x'}}} \\)*/ 
+  4.         }
+  5. }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1a.tex)
+
+. 
+. * 90 % confidence interval (one-sided)
+. cap erase "$MY_TAB/power1b.tex"
+
+. foreach z of numlist 1/4 {
+  2.         foreach x of varlist sportsclub sport_hrs oweight {
+  3.                 estout p`z'_`x' using "$MY_TAB/power1b.tex", ///
+>                          cells("b(fmt(3)) ci(fmt(3))" se(par fmt(3))) keep(treat) style(tex) ///
+>                          starlevels(* 0.10 ** 0.05 *** 0.01) varlabels(treat "${l`x'}") varwidth(27) level(80) ///
+>                          eqlabels(none) mlabels(none) collabels(none) append /*prehead(\addlinespace \multicolumn{1}{l}{\textbf{${l`x'}}} \\)*/ 
+  4.         }
+  5. }
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex not found)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+(output written to G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/results//power1b.tex)
+
+.         
+. 
+. *****************************************************************
+. * 
+. * Power simulations for main specifications
+. *
+. *****************************************************************
+. use     ${DATA_IN}MSZ_main-data.dta, clear
+
+.         
+. * prepare data set for simulations
+. keep    if inrange(year_3rd, 2006, 2011)
+(2,143 observations deleted)
+
+. keep    if inlist(bula_3rd, 4, 13, 16) & target == 1 & nonmiss == 1 
+(1,625 observations deleted)
+
+. keep    lfdn year_3rd cityno sportsclub sport_hrs oweight $controls
+
+. 
+. * make panel balanced at the municipality level
+. egen    cnt = tag(city year)
+
+. bysort  city: egen anzy = sum(cnt)
+
+. egen    anzymax = max(anzy)
+
+. replace city = 999 if anzy < anzymax
+(55 real changes made)
+
+. drop    anzy anzymax
+
+. * --> 88 municipalities: 30 treated and 58 untreated 
+. 
+. rename  year_3rd year
+
+. rename  cityno city
+
+. egen    select = tag(city)
+
+. gen     post = inrange(year,2008,2010)
+
+. gen     wgt = 1
+
+. sort    lfdn
+
+. compress 
+  variable year was float now int
+  variable city was float now int
+  variable sportsclub was float now byte
+  variable oweight was float now byte
+  variable parent_nongermany was float now byte
+  variable academictrack was float now byte
+  variable sportsclub_4_7 was float now byte
+  variable music_4_7 was float now byte
+  variable post was float now byte
+  variable wgt was float now byte
+  (450,296 bytes saved)
+
+. save    ${DATA_OUT}power_ana.dta, replace
+(file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/out-data/power_ana.dta not found)
+file G:\Dokumente\UNI\Semester8\Diplomarbeit\replication/out-data/power_ana.dta saved
+
+. 
+. 
+. cap program drop pseudo_did
+
+. program pseudo_did, rclass
+  1.         args delta
+  2.         
+.         * 1.) randomly select 30 treated municipalities
+.         use     ${DATA_OUT}power_ana.dta, clear
+  3.         sort    lfdn
+  4.         gen     rnd=runiform()
+  5.         gsort   -select rnd
+  6.         gen     tgroup = _n < = 30
+  7.         bysort  city (tgroup): replace tgroup = tgroup[_N]
+  8. 
+.         * 2.) impose a pseudo treatment effect
+.         * 5 pp --> 5% of 0s are 1s in the post period
+.         gen             treat = tgroup * post
+  9.         qui sum treat
+ 10.         local   j = round(r(mean) * `delta' * r(N))
+ 11.         sort    lfdn
+ 12.         gen     rnd2=runiform()
+ 13.         gsort   -treat sportsclub rnd2 
+ 14.         replace sportsclub = 1 in 1/`j'
+ 15.         gsort   -treat -oweight rnd2 
+ 16.         replace oweight = 0 in 1/`j'
+ 17.         replace sport_hrs = sport_hrs + (`delta'*10) if treat == 1
+ 18. 
+.         
+.         * 3.) perform the actual regression
+.         local z = 1
+ 19.         foreach y in sportsclub oweight sport_hrs {
+ 20.                 reg     `y' treat tgroup post if inrange(year, 2006, 2010), vce(cluster city) 
+ 21.                 matrix att1`z'=e(b)
+ 22.                 return scalar b1`z' = att1`z'[1,1]
+ 23.                 scalar b1`z' = att1`z'[1,1]
+ 24.                 return scalar t1`z'=(_b[treat])/ _se[treat] 
+ 25.                 scalar t1`z'=(_b[treat])/ _se[treat]
+ 26. 
+.                 areg    `y' treat i.year if inrange(year, 2006, 2010), vce(cluster city) absorb(city)
+ 27.                 matrix att2`z'=e(b)
+ 28.                 return scalar b2`z' = att2`z'[1,1]
+ 29.                 scalar b2`z' = att1`z'[1,1]
+ 30.                 return scalar t2`z'=(_b[treat])/ _se[treat] 
+ 31.                 scalar t2`z'=(_b[treat])/ _se[treat]
+ 32. 
+.                 areg    `y' treat i.year, vce(cluster city) absorb(city)
+ 33.                 matrix att3`z'=e(b)
+ 34.                 return scalar b3`z' = att3`z'[1,1]
+ 35.                 scalar b3`z' = att3`z'[1,1]
+ 36.                 return scalar t3`z'=(_b[treat])/ _se[treat] 
+ 37.                 scalar t3`z'=(_b[treat])/ _se[treat]
+ 38. 
+. /*              matrix att4`z'=e(b)
+>                 return scalar b4`z' = att4`z'[1,1]
+>                 scalar b4`z' = att4`z'[1,1]
+>                 return scalar t4`z'=(_b[treat])/ _se[treat] 
+>                 scalar t4`z'=(_b[treat])/ _se[treat]
+> */              
+.                 local z = `z' + 1
+ 39.         }
+ 40. 
+.         
+. end
+
+. 
+. 
+. 
+. 
+. use     ${DATA_OUT}power_ana.dta, clear
+
+. set     seed 123456
+
+. sort    lfdn
+
+. foreach d of numlist $effect {
+  2.         * 4.) perform this procedure many times
+.         simulate t11=t11 b11=b11 t12=t12 b12=b12 t13=t13 b13=b13 ///
+>                          t21=t21 b21=b21 t22=t22 b22=b22 t23=t23 b23=b23 /// 
+>                          t31=t31 b31=b31 t32=t32 b32=b32 t33=t33 b33=b33, reps($rep) seed(123456): pseudo_did 0.0`d'
+  3.         local z = 0.0`d'
+  4.         gen delta = `z'
+  5.         save ${DATA_OUT}p`d'.dta, replace
+  6. }
+
+      Command: pseudo_did 0.03
+          t11: t11
+          b11: b11
+          t12: t12
+          b12: b12
+          t13: t13
+          b13: b13
+          t21: t21
+          b21: b21
+          t22: t22
+          b22: b22
+          t23: t23
+          b23: b23
+          t31: t31
+          b31: b31
+          t32: t32
+          b32: b32
+          t33: t33
+          b33: b33
+
+Simulations (1,000): .........10.........20.........30.........40.........50.........60.........70.........80.........90.........100.........110.........120.........130........
+> .140.........150.........160.........170.........180.........190.........200.........210.........220.........230.........240.........250.........260.........270.........280..

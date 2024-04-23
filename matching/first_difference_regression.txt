@@ -1,0 +1,168 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:              kommheard   R-squared:                       0.200
+Model:                            OLS   Adj. R-squared:                  0.200
+Method:                 Least Squares   F-statistic:                     427.8
+Date:                Tue, 23 Apr 2024   Prob (F-statistic):           3.67e-36
+Time:                        15:11:59   Log-Likelihood:                -4153.9
+No. Observations:                9371   AIC:                             8312.
+Df Residuals:                    9369   BIC:                             8326.
+Df Model:                           1                                         
+Covariance Type:              cluster                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept      0.0281      0.003     10.942      0.000       0.023       0.033
+treat          0.3785      0.018     20.684      0.000       0.342       0.415
+==============================================================================
+Omnibus:                      986.167   Durbin-Watson:                   2.002
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):              877.330
+Skew:                           0.674   Prob(JB):                    3.09e-191
+Kurtosis:                       2.346   Cond. No.                         2.71
+==============================================================================
+
+Notes:
+[1] Standard Errors are robust to cluster correlation (cluster)
+Breusch-Pagan test:
+[('Lagrange multiplier statistic', 3926.5609573822903), ('p-value', 0.0), ('f-value', 6756.977040563369), ('f p-value', 0.0)]
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             kommgotten   R-squared:                       0.121
+Model:                            OLS   Adj. R-squared:                  0.121
+Method:                 Least Squares   F-statistic:                     434.5
+Date:                Tue, 23 Apr 2024   Prob (F-statistic):           2.05e-36
+Time:                        15:11:59   Log-Likelihood:                -2523.2
+No. Observations:                9371   AIC:                             5050.
+Df Residuals:                    9369   BIC:                             5065.
+Df Model:                           1                                         
+Covariance Type:              cluster                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept      0.0051      0.001      3.968      0.000       0.003       0.008
+treat          0.2354      0.011     20.845      0.000       0.213       0.258
+==============================================================================
+Omnibus:                     2585.667   Durbin-Watson:                   2.016
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             5408.980
+Skew:                           1.673   Prob(JB):                         0.00
+Kurtosis:                       4.629   Cond. No.                         2.71
+==============================================================================
+
+Notes:
+[1] Standard Errors are robust to cluster correlation (cluster)
+Breusch-Pagan test:
+[('Lagrange multiplier statistic', 2012.7133968711364), ('p-value', 0.0), ('f-value', 2562.704177256064), ('f p-value', 0.0)]
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:               kommused   R-squared:                       0.069
+Model:                            OLS   Adj. R-squared:                  0.069
+Method:                 Least Squares   F-statistic:                     492.9
+Date:                Tue, 23 Apr 2024   Prob (F-statistic):           1.68e-38
+Time:                        15:11:59   Log-Likelihood:                -799.99
+No. Observations:                9371   AIC:                             1604.
+Df Residuals:                    9369   BIC:                             1618.
+Df Model:                           1                                         
+Covariance Type:              cluster                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept      0.0039      0.001      3.959      0.000       0.002       0.006
+treat          0.1441      0.006     22.202      0.000       0.131       0.157
+==============================================================================
+Omnibus:                     5009.486   Durbin-Watson:                   2.021
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):            25861.730
+Skew:                           2.700   Prob(JB):                         0.00
+Kurtosis:                       9.089   Cond. No.                         2.71
+==============================================================================
+
+Notes:
+[1] Standard Errors are robust to cluster correlation (cluster)
+Breusch-Pagan test:
+[('Lagrange multiplier statistic', 891.8426104487407), ('p-value', 5.823017894763508e-196), ('f-value', 985.4367637509389), ('f p-value', 9.191213014124407e-206)]
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:             sportsclub   R-squared:                       0.000
+Model:                            OLS   Adj. R-squared:                 -0.000
+Method:                 Least Squares   F-statistic:                    0.4875
+Date:                Tue, 23 Apr 2024   Prob (F-statistic):              0.487
+Time:                        15:11:59   Log-Likelihood:                -6757.7
+No. Observations:                9371   AIC:                         1.352e+04
+Df Residuals:                    9369   BIC:                         1.353e+04
+Df Model:                           1                                         
+Covariance Type:              cluster                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept      0.4570      0.011     41.173      0.000       0.435       0.479
+treat         -0.0092      0.013     -0.698      0.487      -0.035       0.017
+==============================================================================
+Omnibus:                    33023.835   Durbin-Watson:                   2.011
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             1561.850
+Skew:                           0.193   Prob(JB):                         0.00
+Kurtosis:                       1.037   Cond. No.                         2.71
+==============================================================================
+
+Notes:
+[1] Standard Errors are robust to cluster correlation (cluster)
+Breusch-Pagan test:
+[('Lagrange multiplier statistic', 0.7733616570770344), ('p-value', 0.37917910169268443), ('f-value', 0.7732604177906222), ('f p-value', 0.37923285484822744)]
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:              sport_hrs   R-squared:                       0.000
+Model:                            OLS   Adj. R-squared:                 -0.000
+Method:                 Least Squares   F-statistic:                    0.5750
+Date:                Tue, 23 Apr 2024   Prob (F-statistic):              0.450
+Time:                        15:11:59   Log-Likelihood:                -26787.
+No. Observations:                9371   AIC:                         5.358e+04
+Df Residuals:                    9369   BIC:                         5.359e+04
+Df Model:                           1                                         
+Covariance Type:              cluster                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept      4.8669      0.086     56.530      0.000       4.696       5.038
+treat         -0.0870      0.115     -0.758      0.450      -0.315       0.141
+==============================================================================
+Omnibus:                     4423.128   Durbin-Watson:                   1.984
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):            29616.790
+Skew:                           2.176   Prob(JB):                         0.00
+Kurtosis:                      10.544   Cond. No.                         2.71
+==============================================================================
+
+Notes:
+[1] Standard Errors are robust to cluster correlation (cluster)
+Breusch-Pagan test:
+[('Lagrange multiplier statistic', 0.6064619382395331), ('p-value', 0.43612307136283546), ('f-value', 0.6063717469583484), ('f p-value', 0.43617685743954215)]
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                oweight   R-squared:                       0.001
+Model:                            OLS   Adj. R-squared:                  0.000
+Method:                 Least Squares   F-statistic:                     1.440
+Date:                Tue, 23 Apr 2024   Prob (F-statistic):              0.233
+Time:                        15:11:59   Log-Likelihood:                -3440.9
+No. Observations:                9371   AIC:                             6886.
+Df Residuals:                    9369   BIC:                             6900.
+Df Model:                           1                                         
+Covariance Type:              cluster                                         
+==============================================================================
+                 coef    std err          t      P>|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+Intercept      0.1508      0.006     25.997      0.000       0.139       0.162
+treat         -0.0157      0.013     -1.200      0.233      -0.042       0.010
+==============================================================================
+Omnibus:                     3321.299   Durbin-Watson:                   1.980
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             8405.518
+Skew:                           2.046   Prob(JB):                         0.00
+Kurtosis:                       5.189   Cond. No.                         2.71
+==============================================================================
+
+Notes:
+[1] Standard Errors are robust to cluster correlation (cluster)
+Breusch-Pagan test:
+[('Lagrange multiplier statistic', 4.704067316717676), ('p-value', 0.03009132525513013), ('f-value', 4.7054253898323415), ('f p-value', 0.030092623894669306)]
+

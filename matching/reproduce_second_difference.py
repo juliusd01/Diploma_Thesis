@@ -25,21 +25,14 @@ print(summary)
 outcomes = ['kommheard', 'kommgotten', 'kommused', 'sportsclub', 'sport_hrs', 'oweight']
 
 # Run the regressions and store the results
-latex_output = ''
-for outcome in outcomes:
-    results = []
-    model1 = smf.ols(f'{outcome} ~ treat + tbula_3rd + tcoh', data=df).fit()
-    model2 = smf.ols(f'{outcome} ~ treat + C(year_3rd) + C(bula_3rd)', data=df).fit()
-    model3 = smf.ols(f'{outcome} ~ treat + C(year_3rd) + C(bula_3rd) + C(cityno)', data=df).fit()
-    results.extend([model1, model2, model3])
-
-    # Output the results to a LaTeX file
-    stargazer = Stargazer(results)
-    stargazer.title(f'Evaluation of Sports Club Voucher Program: Main DD Results for {outcome}')
-    stargazer.custom_columns(['Model 1', 'Model 2', 'Model 3'], [1, 1, 1])
-    stargazer.significant_digits(3)
-    latex_output += stargazer.render_latex() + '\n\n'
-
-# Write the LaTeX output to a file
-with open('main.tex', 'w') as f:
-    f.write(latex_output)
+with open('main.txt', 'w') as f:
+    for outcome in outcomes:
+        model1 = smf.ols(f'{outcome} ~ treat + tbula_3rd + tcoh', data=df).fit().get_robustcov_results(cov_type='cluster', groups=df['cityno'])
+        f.write(model1.summary().as_text())
+        f.write('\n\n')
+        model2 = smf.ols(f'{outcome} ~ treat + C(year_3rd) + C(bula_3rd)', data=df).fit().get_robustcov_results(cov_type='cluster', groups=df['cityno'])
+        f.write(model2.summary().as_text())
+        f.write('\n\n')
+        model3 = smf.ols(f'{outcome} ~ treat + C(year_3rd) + C(bula_3rd) + C(cityno)', data=df).fit().get_robustcov_results(cov_type='cluster', groups=df['cityno'])
+        f.write(model3.summary().as_text())
+        f.write('\n\n')

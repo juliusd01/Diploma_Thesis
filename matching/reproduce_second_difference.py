@@ -6,7 +6,8 @@ pd.set_option('display.max_rows', None)
 
 # load cleaned data
 df = pd.read_csv('data/preprocessed_data.csv')
-
+treated = df[df['treat'] == 1]
+controls = df[(df['treat'] == 0) & (df['year_3rd'].isin(['2008/09', '2009/10', '2010/11']))]
 ######################
 # Summary statistics
 ######################
@@ -16,8 +17,21 @@ variables = ['age', 'female', 'urban', 'academictrack', 'newspaper', 'art_at_hom
 summary = df[variables].describe().transpose()
 # Format the summary statistics
 summary = summary[['mean', 'std', 'min', 'max']].round(2)
-print(summary)
+print("Total summary statistics: ", summary)
 
+# Generate summary statistics for the specified variables for the treated group
+summary_treated = treated[variables].describe().transpose()
+summary_treated = summary_treated[['mean', 'std', 'min', 'max']].round(2)
+print("Treated summary statistics: ", summary_treated)
+print(len(treated))
+
+# Generate summary statistics for the specified variables for the control group
+summary_controls = controls[variables].describe().transpose()
+summary_controls = summary_controls[['mean', 'std', 'min', 'max']].round(2)
+print(" \n Control summary statistics: ", summary_controls)
+print(len(controls))
+
+exit()
 ######################
 # DiD Models
 ######################

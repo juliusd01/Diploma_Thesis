@@ -27,7 +27,7 @@ currentsmoking | is person a current smoker | bool
 everalc | did person ever drink alcohol | bool
 alclast7 | did person drink alcohol in last 7 days | bool
 **female** | gender of person | bool
-**siblings** | person has sibling(s) | bool
+siblings | person has sibling(s) | bool
 **born_germany** | person is born in Germany | bool
 **parent_nongermany** | parents are not from Germany | bool
 newspaper | family has newspaper at home (proxy for socioeconomic status) | bool

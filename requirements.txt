@@ -4,3 +4,5 @@ statsmodels
 linearmodels
 matplotlib
 stargazer
+causalinference
+causaldata

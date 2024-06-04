@@ -6,3 +6,4 @@ matplotlib
 stargazer
 causalinference
 causaldata
+causalml

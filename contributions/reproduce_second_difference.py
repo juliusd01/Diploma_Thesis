@@ -6,7 +6,9 @@ pd.set_option('display.max_rows', None)
 
 # load cleaned data
 df = pd.read_csv('data/preprocessed_data.csv')
-treated = df[df['treat'] == 1]
+treated = df[(df['treat'] == 1) & (df['year_3rd'].isin(['2008/09', '2009/10', '2010/11']))]
+print(len(treated))
+exit()
 controls = df[(df['treat'] == 0) & (df['year_3rd'].isin(['2008/09', '2009/10', '2010/11']))]
 ######################
 # Summary statistics

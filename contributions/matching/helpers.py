@@ -1,13 +1,20 @@
 
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import PolynomialFeatures
 import statsmodels.api as sm
 import seaborn as sns
 import matplotlib.pyplot as plt
 from causalml.match import NearestNeighborMatch, create_table_one
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+import xgboost as xgb
 
 
+INDEPENDENT_VARIABLES = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
+       'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown']
 
 def __read_in_data(impute_ed_stats_p: bool) -> pd.DataFrame:
     if impute_ed_stats_p:
@@ -58,13 +65,8 @@ def generate_interactions_and_quadratics(data, feature_columns):
 
 def __estimate_ps_logistic_regression(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
     if impute_ed_stats_p is False:
-        independent_variables = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
-       'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown']
-    else:
-        independent_variables = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
-       'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'education_unknown', 'kindergarten_stats_unknown', 'parent_nongerman_unknown']
-    data = df[independent_variables]
-
+        INDEPENDENT_VARIABLES.append('education_unknown')
+    data = df[INDEPENDENT_VARIABLES]
     interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban"]#, 'abi_p', 'real_p', 'haupt_p']
     # Generate interaction and quadratic terms on standardized data
     interaction_quadratic_df = generate_interactions_and_quadratics(data, interactions_terms)
@@ -94,6 +96,104 @@ def __estimate_ps_logistic_regression(df: pd.DataFrame, impute_ed_stats_p: bool)
     return data_expanded
 
 
+def __estimate_ps_CART(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
+    if impute_ed_stats_p is False:
+        INDEPENDENT_VARIABLES.append('education_unknown')
+    data = df[INDEPENDENT_VARIABLES]
+
+    y = df['treat']
+    cart_model = DecisionTreeClassifier()
+    cart_model.fit(data, y)
+    data['ps'] = cart_model.predict_proba(data)[:, 1]
+    data['treat'] = y
+
+    # add outcome variables to expanded data
+    data['sportsclub'] = df['sportsclub']
+    data['sport_hrs'] = df['sport_hrs']
+    data['oweight'] = df['oweight']
+    data['kommheard'] = df['kommheard']
+    data['kommgotten'] = df['kommgotten']
+    data['kommused'] = df['kommused']
+
+    # plot the decision tree
+    # plt.figure(figsize=(40,20))
+    # plot_tree(cart_model, filled=True, feature_names=INDEPENDENT_VARIABLES)
+    # plt.show()
+
+    return data
+
+
+def __estimate_ps_XGBoost(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
+    if impute_ed_stats_p is False:
+        INDEPENDENT_VARIABLES.append('education_unknown')
+    data = df[INDEPENDENT_VARIABLES]
+
+    y = df['treat']
+    xgb_model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+    xgb_model.fit(data, y)
+    data['ps'] = xgb_model.predict_proba(data)[:, 1]
+    data['treat'] = y
+
+    # add outcome variables to expanded data
+    data['sportsclub'] = df['sportsclub']
+    data['sport_hrs'] = df['sport_hrs']
+    data['oweight'] = df['oweight']
+    data['kommheard'] = df['kommheard']
+    data['kommgotten'] = df['kommgotten']
+    data['kommused'] = df['kommused']
+
+    return data
+
+
+def __estimate_ps_Random_Forest(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
+    if impute_ed_stats_p is False:
+        INDEPENDENT_VARIABLES.append('education_unknown')
+    data = df[INDEPENDENT_VARIABLES]
+
+    y = df['treat']
+    rf_model = RandomForestClassifier()
+    rf_model.fit(data, y)
+    data['ps'] = rf_model.predict_proba(data)[:, 1]
+    data['treat'] = y
+
+    # add outcome variables to expanded data
+    data['sportsclub'] = df['sportsclub']
+    data['sport_hrs'] = df['sport_hrs']
+    data['oweight'] = df['oweight']
+    data['kommheard'] = df['kommheard']
+    data['kommgotten'] = df['kommgotten']
+    data['kommused'] = df['kommused']
+
+    return data
+
+def __estimate_ps_LASSO(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
+    if impute_ed_stats_p is False:
+        INDEPENDENT_VARIABLES.append('education_unknown')
+    data = df[INDEPENDENT_VARIABLES]
+
+    y = df['treat']
+    
+    # Standardize the features to the same scale
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data)
+
+    # Create and fit the LASSO model
+    lasso_model = LogisticRegression(penalty='l1', solver='liblinear')
+    lasso_model.fit(data_scaled, y)
+
+    # Predict the propensity scores
+    data['ps'] = lasso_model.predict_proba(data_scaled)[:, 1]
+    data['treat'] = y
+
+    # add outcome variables to expanded data
+    data['sportsclub'] = df['sportsclub']
+    data['sport_hrs'] = df['sport_hrs']
+    data['oweight'] = df['oweight']
+    data['kommheard'] = df['kommheard']
+    data['kommgotten'] = df['kommgotten']
+    data['kommused'] = df['kommused']
+
+    return data
 
 
 def estimate_propensity_scores(method: str, impute_ed_stats_p: bool) -> pd.DataFrame:
@@ -107,7 +207,16 @@ def estimate_propensity_scores(method: str, impute_ed_stats_p: bool) -> pd.DataF
     # estimate the propensity scores by the specified method
     if method == "logreg":
         data = __estimate_ps_logistic_regression(df=data, impute_ed_stats_p=True)
-
+    elif method == "cart":
+        data = __estimate_ps_CART(df=data, impute_ed_stats_p=True)
+    elif method == "boosted_trees":
+        data = __estimate_ps_XGBoost(df=data, impute_ed_stats_p=True)
+    elif method == "random_forest":
+        data = __estimate_ps_Random_Forest(df=data, impute_ed_stats_p=True)
+    elif method == "lasso":
+        data = __estimate_ps_LASSO(df=data, impute_ed_stats_p=True)
+    else:
+        raise ValueError("Invalid method specified. Please choose one of the following: 'logreg', 'cart', 'boosted_trees', 'random_forest', 'lasso'.")
 
     return data
 

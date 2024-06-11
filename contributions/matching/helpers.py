@@ -208,13 +208,13 @@ def estimate_propensity_scores(method: str, impute_ed_stats_p: bool) -> pd.DataF
     if method == "logreg":
         data = __estimate_ps_logistic_regression(df=data, impute_ed_stats_p=True)
     elif method == "cart":
-        data = __estimate_ps_CART(df=data, impute_ed_stats_p=True)
+        data = __estimate_ps_CART(df=data, impute_ed_stats_p)
     elif method == "boosted_trees":
-        data = __estimate_ps_XGBoost(df=data, impute_ed_stats_p=True)
+        data = __estimate_ps_XGBoost(df=data, impute_ed_stats_p)
     elif method == "random_forest":
-        data = __estimate_ps_Random_Forest(df=data, impute_ed_stats_p=True)
+        data = __estimate_ps_Random_Forest(df=data, impute_ed_stats_p)
     elif method == "lasso":
-        data = __estimate_ps_LASSO(df=data, impute_ed_stats_p=True)
+        data = __estimate_ps_LASSO(df=data, impute_ed_stats_p)
     else:
         raise ValueError("Invalid method specified. Please choose one of the following: 'logreg', 'cart', 'boosted_trees', 'random_forest', 'lasso'.")
 

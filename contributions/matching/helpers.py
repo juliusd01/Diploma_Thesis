@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 
 
-INDEPENDENT_VARIABLES = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
+INDEPENDENT_VARIABLES = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
        'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown']
 
 def __read_in_data(impute_ed_stats_p: bool) -> pd.DataFrame:
@@ -23,7 +23,7 @@ def __read_in_data(impute_ed_stats_p: bool) -> pd.DataFrame:
         data = pd.read_csv('data/preprocessed_data.csv')
     # only select participants from the years 2008/09, 2009/10, and 2010/11
     data = data[(data['year_3rd'] == "2008/09") | (data['year_3rd'] == "2009/10") | (data['year_3rd'] == "2010/11")]
-    important_variables = ["treat", "oweight", "sportsclub", "sport_hrs", "kommheard", "kommgotten", "kommused", "female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "yob", "mob", "abi_p", "real_p", "haupt_p"]
+    important_variables = ["treat", "oweight", "sportsclub", "sport_hrs", "kommheard", "kommgotten", "kommused", "female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings", "yob", "mob", "abi_p", "real_p", "haupt_p"]
     data = data[important_variables]
 
     return data
@@ -57,25 +57,23 @@ def __create_yob_dummies(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 def generate_interactions_and_quadratics(data, feature_columns):
-    poly = PolynomialFeatures(degree=2, interaction_only=False, include_bias=False)
-    interaction_quadratic_matrix = poly.fit_transform(data[feature_columns])
+    poly = PolynomialFeatures(degree=1, interaction_only=True, include_bias=False)
+    interaction_matrix = poly.fit_transform(data[feature_columns])
     feature_names = poly.get_feature_names_out(input_features=feature_columns)
-    interaction_quadratic_df = pd.DataFrame(interaction_quadratic_matrix, columns=feature_names)
-    return interaction_quadratic_df
+    interaction_df = pd.DataFrame(interaction_matrix, columns=feature_names)
+    return interaction_df
 
 def __estimate_ps_logistic_regression(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
     if impute_ed_stats_p is False:
         INDEPENDENT_VARIABLES.append('education_unknown')
     data = df[INDEPENDENT_VARIABLES]
-    interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban"]#, 'abi_p', 'real_p', 'haupt_p']
+    interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings"]#, 'abi_p', 'real_p', 'haupt_p']
     # Generate interaction and quadratic terms on standardized data
     interaction_quadratic_df = generate_interactions_and_quadratics(data, interactions_terms)
     # Combine with the original standardized data
     data_expanded = pd.concat([data, interaction_quadratic_df], axis=1)
     # Remove duplicate columns if any
     data_expanded = data_expanded.loc[:, ~data_expanded.columns.duplicated()]
-    # Drop columns with high vif
-    data_expanded = data_expanded.drop(columns=['urban^2', 'music_4_7^2', 'sportsclub_4_7^2', 'female^2'])
 
     y = df['treat']
     # Fit the model

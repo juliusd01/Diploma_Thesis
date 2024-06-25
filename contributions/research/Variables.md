@@ -67,3 +67,21 @@ would be exhausting for me not to do. (7) Exercising is something that is part o
 routine. (8) Exercising is something that would be difficult for me not to do. (9) Exercising
 is something that I do without the need to think about it. (10) Exercising is something that is
 typical for me. (11) Exercising is something that I have been doing for a long time.
+
+
+# Variables used for Estimation of Propensity Scores
+
+|variable name|explanation|type|
+|:-----------|------------|----|
+**born_germany** | person is born in Germany | bool
+**parent_nongermany** | parents are not from Germany | bool
+**female** | gender of person | bool
+**sportsclub_4_7** | in sports club between ages 4 and 7 | bool
+**music_4_7** | took music lessons between ages 4 and 7 | bool
+**urban** | lives in city | bool
+**yob** | year of birth | categorical
+**abi_p** | parents have Abitur | bool
+**real_p** | parents have Realschulabschluss | bool
+**haupt_p** | parents have Hauptschulabschluss | bool
+**anz_osiblings** | (number of other siblings) | categorical
+**[interaction terms]** | interaction between variables | float

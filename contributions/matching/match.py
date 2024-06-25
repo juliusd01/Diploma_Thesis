@@ -4,7 +4,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-data = helpers.estimate_propensity_scores(method="lasso", impute_ed_stats_p=False)
+data = helpers.estimate_propensity_scores(method="logreg")
 helpers.check_common_support(data)
 matched_data = helpers.match_on_propensity_score(data, verbose=True)
 

@@ -11,16 +11,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
 
 
 INDEPENDENT_VARIABLES = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
-       'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown']
+       'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown', 'education_unknown']
 
-def __read_in_data(impute_ed_stats_p: bool) -> pd.DataFrame:
-    if impute_ed_stats_p:
-        data = pd.read_csv('data/preprocessed_data_imputed.csv')
-    else:
-        data = pd.read_csv('data/preprocessed_data.csv')
+def __read_in_data() -> pd.DataFrame:
+    data = pd.read_csv('data/preprocessed_data.csv')
     # only select participants from the years 2008/09, 2009/10, and 2010/11
     data = data[(data['year_3rd'] == "2008/09") | (data['year_3rd'] == "2009/10") | (data['year_3rd'] == "2010/11")]
     important_variables = ["treat", "oweight", "sportsclub", "sport_hrs", "kommheard", "kommgotten", "kommused", "female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings", "yob", "mob", "abi_p", "real_p", "haupt_p"]
@@ -29,19 +28,18 @@ def __read_in_data(impute_ed_stats_p: bool) -> pd.DataFrame:
     return data
 
 
-def __handle_missing_values(data: pd.DataFrame, impute_ed_stats_p: bool):
-    if impute_ed_stats_p is False:
-        data['education_unknown'] = np.where(data[['abi_p', 'real_p', 'haupt_p']].isna().all(axis=1), 1, 0)
-        # Fill NAs in the individual education columns with -1 to indicate that the specific education level is not applicable/answered
-        data[['abi_p', 'real_p', 'haupt_p']] = data[['abi_p', 'real_p', 'haupt_p']].fillna(-1)
+def __handle_missing_values(data: pd.DataFrame):
+    data['education_unknown'] = np.where(data[['abi_p', 'real_p', 'haupt_p']].isna().all(axis=1), 1, 0)
+    # Fill NAs in the individual education columns with -1 to indicate that the specific education level is not applicable/answered
+    data[['abi_p', 'real_p', 'haupt_p']] = data[['abi_p', 'real_p', 'haupt_p']].fillna(0)
     
     # create variable if stats for sportsclub and music at ages 4-7 are unknown
     data['kindergarten_stats_unknown'] = np.where(data[['sportsclub_4_7', 'music_4_7']].isna().all(axis=1), 1, 0)
-    data[['sportsclub_4_7', 'music_4_7']] = data[['sportsclub_4_7', 'music_4_7']].fillna(-1)
+    data[['sportsclub_4_7', 'music_4_7']] = data[['sportsclub_4_7', 'music_4_7']].fillna(0)
 
     # create variable if no statement was made if parents are german
     data['parent_nongerman_unknown'] = np.where(data['parent_nongermany'].isna(), 1, 0)
-    data['parent_nongermany'] = data['parent_nongermany'].fillna(-1)
+    data['parent_nongermany'] = data['parent_nongermany'].fillna(0)
 
     data.dropna(inplace=True)
     data.reset_index(drop=True, inplace=True)
@@ -56,24 +54,35 @@ def __create_yob_dummies(data: pd.DataFrame) -> pd.DataFrame:
 
     return data
 
-def generate_interactions_and_quadratics(data, feature_columns):
-    poly = PolynomialFeatures(degree=1, interaction_only=True, include_bias=False)
+def generate_interactions(data, feature_columns):
+    poly = PolynomialFeatures(degree=2, interaction_only=True, include_bias=False)
     interaction_matrix = poly.fit_transform(data[feature_columns])
     feature_names = poly.get_feature_names_out(input_features=feature_columns)
     interaction_df = pd.DataFrame(interaction_matrix, columns=feature_names)
+    # Filter out the original features, leaving only interaction terms
+    interaction_columns = [col for col in interaction_df.columns if " " in col]
+    interaction_df = interaction_df[interaction_columns]
     return interaction_df
 
-def __estimate_ps_logistic_regression(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
-    if impute_ed_stats_p is False:
-        INDEPENDENT_VARIABLES.append('education_unknown')
+def get_variance_inflation_factor(data):
+    vif_data = pd.DataFrame()
+    vif_data["feature"] = data.columns
+    vif_data["VIF"] = [variance_inflation_factor(data.values, i) for i in range(data.shape[1])]
+    return vif_data
+
+def __estimate_ps_logistic_regression(df: pd.DataFrame) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
-    interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings"]#, 'abi_p', 'real_p', 'haupt_p']
+    interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings"]
     # Generate interaction and quadratic terms on standardized data
-    interaction_quadratic_df = generate_interactions_and_quadratics(data, interactions_terms)
+    interaction_quadratic_df = generate_interactions(data, interactions_terms)
     # Combine with the original standardized data
     data_expanded = pd.concat([data, interaction_quadratic_df], axis=1)
     # Remove duplicate columns if any
     data_expanded = data_expanded.loc[:, ~data_expanded.columns.duplicated()]
+
+    # check variance inflation factor
+    vif = get_variance_inflation_factor(data_expanded)
+    print(vif)
 
     y = df['treat']
     # Fit the model
@@ -94,9 +103,7 @@ def __estimate_ps_logistic_regression(df: pd.DataFrame, impute_ed_stats_p: bool)
     return data_expanded
 
 
-def __estimate_ps_CART(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
-    if impute_ed_stats_p is False:
-        INDEPENDENT_VARIABLES.append('education_unknown')
+def __estimate_ps_CART(df: pd.DataFrame) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
 
     y = df['treat']
@@ -121,9 +128,7 @@ def __estimate_ps_CART(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFram
     return data
 
 
-def __estimate_ps_XGBoost(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
-    if impute_ed_stats_p is False:
-        INDEPENDENT_VARIABLES.append('education_unknown')
+def __estimate_ps_XGBoost(df: pd.DataFrame) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
 
     y = df['treat']
@@ -143,9 +148,7 @@ def __estimate_ps_XGBoost(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataF
     return data
 
 
-def __estimate_ps_Random_Forest(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
-    if impute_ed_stats_p is False:
-        INDEPENDENT_VARIABLES.append('education_unknown')
+def __estimate_ps_Random_Forest(df: pd.DataFrame) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
 
     y = df['treat']
@@ -164,9 +167,7 @@ def __estimate_ps_Random_Forest(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd
 
     return data
 
-def __estimate_ps_LASSO(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFrame:
-    if impute_ed_stats_p is False:
-        INDEPENDENT_VARIABLES.append('education_unknown')
+def __estimate_ps_LASSO(df: pd.DataFrame) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
 
     y = df['treat']
@@ -194,25 +195,26 @@ def __estimate_ps_LASSO(df: pd.DataFrame, impute_ed_stats_p: bool) -> pd.DataFra
     return data
 
 
-def estimate_propensity_scores(method: str, impute_ed_stats_p: bool) -> pd.DataFrame:
+def estimate_propensity_scores(method: str) -> pd.DataFrame:
     """Estimates the propensity scores for YOLO survey data using the specified method. The returned dataframe contains
     the propensity scores as a new column 'ps'.
+    param method: The method to use for estimating the propensity scores. Choose from 'logreg', 'cart', 'boosted_trees', 'random_forest', 'lasso'.
     """
     # Prepare the data
-    data = __read_in_data(impute_ed_stats_p)
-    data = __handle_missing_values(data, impute_ed_stats_p)
+    data = __read_in_data()
+    data = __handle_missing_values(data, )
     data = __create_yob_dummies(data)
     # estimate the propensity scores by the specified method
     if method == "logreg":
-        data = __estimate_ps_logistic_regression(df=data, impute_ed_stats_p=True)
+        data = __estimate_ps_logistic_regression(df=data)
     elif method == "cart":
-        data = __estimate_ps_CART(df=data, impute_ed_stats_p)
+        data = __estimate_ps_CART(df=data)
     elif method == "boosted_trees":
-        data = __estimate_ps_XGBoost(df=data, impute_ed_stats_p)
+        data = __estimate_ps_XGBoost(df=data)
     elif method == "random_forest":
-        data = __estimate_ps_Random_Forest(df=data, impute_ed_stats_p)
+        data = __estimate_ps_Random_Forest(df=data)
     elif method == "lasso":
-        data = __estimate_ps_LASSO(df=data, impute_ed_stats_p)
+        data = __estimate_ps_LASSO(df=data)
     else:
         raise ValueError("Invalid method specified. Please choose one of the following: 'logreg', 'cart', 'boosted_trees', 'random_forest', 'lasso'.")
 
@@ -244,6 +246,7 @@ def match_on_propensity_score(df: pd.DataFrame, verbose: bool=False) -> pd.DataF
         assert len(treated_outcome) == len(control_outcome)
         # Estimate ATT
         att = treated_outcome.mean() - control_outcome.mean()
+        print("\n -----------------------  Outcome  -----------------------\n")
         print(f"Mean outcome for treated: {treated_outcome.mean()}")
         print(f"Mean outcome for control: {control_outcome.mean()}")
         print(f"Average Treatment Effect on the Treated (ATT): {att}")

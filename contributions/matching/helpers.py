@@ -10,6 +10,7 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import roc_curve, roc_auc_score
 import xgboost as xgb
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
@@ -75,7 +76,7 @@ def __estimate_ps_logistic_regression(df: pd.DataFrame) -> pd.DataFrame:
     interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings"]
     # Generate interaction and quadratic terms on standardized data
     interaction_quadratic_df = generate_interactions(data, interactions_terms)
-    # Combine with the original standardized data
+    # Combine with the original data
     data_expanded = pd.concat([data, interaction_quadratic_df], axis=1)
     # Remove duplicate columns if any
     data_expanded = data_expanded.loc[:, ~data_expanded.columns.duplicated()]
@@ -169,12 +170,19 @@ def __estimate_ps_Random_Forest(df: pd.DataFrame) -> pd.DataFrame:
 
 def __estimate_ps_LASSO(df: pd.DataFrame) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
+    interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings"]
+    # Generate interaction and quadratic terms on standardized data
+    interaction_quadratic_df = generate_interactions(data, interactions_terms)
+    # Combine with the original data
+    data_expanded = pd.concat([data, interaction_quadratic_df], axis=1)
+    # Remove duplicate columns if any
+    data_expanded = data_expanded.loc[:, ~data_expanded.columns.duplicated()]
 
     y = df['treat']
     
     # Standardize the features to the same scale
     scaler = StandardScaler()
-    data_scaled = scaler.fit_transform(data)
+    data_scaled = scaler.fit_transform(data_expanded)
 
     # Create and fit the LASSO model
     lasso_model = LogisticRegression(penalty='l1', solver='liblinear')
@@ -222,30 +230,51 @@ def estimate_propensity_scores(method: str) -> pd.DataFrame:
 
 
 
-def check_common_support(data: pd.DataFrame):
+def check_common_support(data: pd.DataFrame, method: str):
     """Creates a plot to check for common support by comparing the distribution of propensity scores for the treated and
     untreated groups.
     """
-    sns.histplot(data[data['treat'] == 0]['ps'], color="skyblue", label='Untreated', bins=20)
     sns.histplot(data[data['treat'] == 1]['ps'], color="red", label='Treated', bins=20)
+    sns.histplot(data[data['treat'] == 0]['ps'], color="skyblue", label='Untreated', bins=20)
     plt.legend(title='Group')
     plt.xlabel('Propensity Score')
-    plt.title('Distribution of Propensity Scores for Treated and Untreated Groups')
-    plt.show()
+    plt.savefig(f"/home/juliusdoebelt/documents/repos/Diploma_Thesis/contributions/output/common_support/{method}.png")
+    plt.close()
 
 
-def match_on_propensity_score(df: pd.DataFrame, verbose: bool=False) -> pd.DataFrame:
+def plot_roc_auc_score(data: pd.DataFrame, method: str):
+    # Calculate the ROC curve and AUC
+    fpr, tpr, thresholds = roc_curve(data['treat'], data['ps'])
+    auc_score = roc_auc_score(data['treat'], data['ps'])
 
-    # Perform matching
-    matcher = NearestNeighborMatch(replace=True, ratio=1, random_state=42)
+    # Plot the ROC curve
+    plt.figure()
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (area = {auc_score:.2f})')
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(f'Receiver Operating Characteristic {method.upper()}')
+    plt.legend(loc="lower right")
+    plt.savefig(f"/home/juliusdoebelt/documents/repos/Diploma_Thesis/contributions/output/roc_auc/{method}.png")
+    plt.close()
+
+
+def match_on_propensity_score(df: pd.DataFrame, method: str, verbose: bool=False) -> pd.DataFrame:
+
+    # Perform caliper matching
+    matcher = NearestNeighborMatch(replace=True, ratio=1, random_state=42, caliper=0.2)
     matched_data = matcher.match(data=df, treatment_col='treat', score_cols=['ps'])
 
+    treated_outcome = matched_data[matched_data['treat'] == 1][['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']]
+    control_outcome = matched_data[matched_data['treat'] == 0][['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']]
+    assert len(treated_outcome) == len(control_outcome)
+    att = treated_outcome.mean() - control_outcome.mean()
+    att.to_csv(f"/home/juliusdoebelt/documents/repos/Diploma_Thesis/contributions/output/outcome/att_{method}.csv")
+    
     if verbose:
-        treated_outcome = matched_data[matched_data['treat'] == 1][['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']]
-        control_outcome = matched_data[matched_data['treat'] == 0][['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']]
-        assert len(treated_outcome) == len(control_outcome)
-        # Estimate ATT
-        att = treated_outcome.mean() - control_outcome.mean()
+        # Print results
         print("\n -----------------------  Outcome  -----------------------\n")
         print(f"Mean outcome for treated: {treated_outcome.mean()}")
         print(f"Mean outcome for control: {control_outcome.mean()}")
@@ -261,13 +290,14 @@ def get_covariate_balance_for_ps_range(df: pd.DataFrame, ps_low: float, ps_high:
     data = df
     features = df.columns.to_list()
     features.remove('treat')
-    # print(features)
-    ps_range_data = data[(data['ps'] >= ps_low) & (data['ps'] <= ps_high)]
+    ps_range_data = pd.DataFrame(data[(data['ps'] >= ps_low) & (data['ps'] <= ps_high)])
+    if len(ps_range_data) == 0:
+        print(f"No individuals in the given range {ps_low} - {ps_high}.")
+        return None
     balance = create_table_one(
                 data=ps_range_data,
                 treatment_col='treat',
                 features=features
                 )
-    
     return balance
 

@@ -17,7 +17,7 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 
 INDEPENDENT_VARIABLES = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
-       'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown', 'education_unknown']
+       'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown', 'education_unknown', 'anz_osiblings_unknown']
 
 def __read_in_data() -> pd.DataFrame:
     data = pd.read_csv('data/preprocessed_data.csv')
@@ -29,7 +29,7 @@ def __read_in_data() -> pd.DataFrame:
     return data
 
 
-def __handle_missing_values(data: pd.DataFrame):
+def handle_missing_values(data: pd.DataFrame):
     data['education_unknown'] = np.where(data[['abi_p', 'real_p', 'haupt_p']].isna().all(axis=1), 1, 0)
     # Fill NAs in the individual education columns with -1 to indicate that the specific education level is not applicable/answered
     data[['abi_p', 'real_p', 'haupt_p']] = data[['abi_p', 'real_p', 'haupt_p']].fillna(0)
@@ -42,6 +42,10 @@ def __handle_missing_values(data: pd.DataFrame):
     data['parent_nongerman_unknown'] = np.where(data['parent_nongermany'].isna(), 1, 0)
     data['parent_nongermany'] = data['parent_nongermany'].fillna(0)
 
+    # create variable if number of other siblings is unknown
+    data['anz_osiblings_unknown'] = np.where(data['anz_osiblings'].isna(), 1, 0)
+    data['anz_osiblings'] = data['anz_osiblings'].fillna(0)
+    
     data.dropna(inplace=True)
     data.reset_index(drop=True, inplace=True)
 
@@ -210,7 +214,7 @@ def estimate_propensity_scores(method: str) -> pd.DataFrame:
     """
     # Prepare the data
     data = __read_in_data()
-    data = __handle_missing_values(data, )
+    data = handle_missing_values(data)
     data = __create_yob_dummies(data)
     # estimate the propensity scores by the specified method
     if method == "logreg":

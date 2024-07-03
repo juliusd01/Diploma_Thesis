@@ -5,7 +5,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # SETTINGS
-method="logreg"
+method="random_forest"
 
 data = helpers.estimate_propensity_scores(method=method)
 helpers.plot_roc_auc_score(data, method=method)

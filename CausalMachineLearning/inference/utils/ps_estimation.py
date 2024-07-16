@@ -18,7 +18,6 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 INDEPENDENT_VARIABLES = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
        'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown', 'education_unknown', 'anz_osiblings_unknown']
 
-OUTCOME_VARS = ['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']
 
 def __read_in_data() -> pd.DataFrame:
     data = pd.read_csv('data/preprocessed_data.csv')
@@ -239,11 +238,11 @@ def check_common_support(data: pd.DataFrame, method: str):
     """Creates a plot to check for common support by comparing the distribution of propensity scores for the treated and
     untreated groups.
     """
-    sns.histplot(data[data['treat'] == 1]['ps'], color="red", label='Treated', bins=20)
-    sns.histplot(data[data['treat'] == 0]['ps'], color="skyblue", label='Untreated', bins=20)
+    sns.histplot(data[data['treat'] == 1]['ps'], color="skyblue", label='Treated', bins=20)
+    sns.histplot(data[data['treat'] == 0]['ps'], color="red", label='Untreated', bins=20)
     plt.legend(title='Group')
     plt.xlabel('Propensity Score')
-    plt.savefig(f"/home/juliusdoebelt/documents/repos/Diploma_Thesis/contributions/output/common_support/{method}.png")
+    plt.savefig(f"CausalMachineLearning/output/common_support/{method}.png")
     plt.close()
 
 
@@ -262,5 +261,5 @@ def plot_roc_auc_score(data: pd.DataFrame, method: str):
     plt.ylabel('True Positive Rate')
     plt.title(f'Receiver Operating Characteristic {method.upper()}')
     plt.legend(loc="lower right")
-    plt.savefig(f"/home/juliusdoebelt/documents/repos/Diploma_Thesis/contributions/output/roc_auc/{method}.png")
+    plt.savefig(f"CausalMachineLearning/output/roc_auc/{method}.png")
     plt.close()

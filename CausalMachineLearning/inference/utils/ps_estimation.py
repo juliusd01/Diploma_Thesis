@@ -4,7 +4,6 @@ import numpy as np
 import statsmodels.api as sm
 import seaborn as sns
 import matplotlib.pyplot as plt
-from causalml.match import NearestNeighborMatch, create_table_one
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.ensemble import RandomForestClassifier
@@ -18,6 +17,8 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 INDEPENDENT_VARIABLES = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
        'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown', 'education_unknown', 'anz_osiblings_unknown']
+
+OUTCOME_VARS = ['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']
 
 def __read_in_data() -> pd.DataFrame:
     data = pd.read_csv('data/preprocessed_data.csv')
@@ -263,45 +264,3 @@ def plot_roc_auc_score(data: pd.DataFrame, method: str):
     plt.legend(loc="lower right")
     plt.savefig(f"/home/juliusdoebelt/documents/repos/Diploma_Thesis/contributions/output/roc_auc/{method}.png")
     plt.close()
-
-
-def match_on_propensity_score(df: pd.DataFrame, method: str, verbose: bool=False) -> pd.DataFrame:
-
-    # Perform caliper matching
-    matcher = NearestNeighborMatch(replace=True, ratio=1, random_state=42, caliper=0.2)
-    matched_data = matcher.match(data=df, treatment_col='treat', score_cols=['ps'])
-
-    treated_outcome = matched_data[matched_data['treat'] == 1][['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']]
-    control_outcome = matched_data[matched_data['treat'] == 0][['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']]
-    assert len(treated_outcome) == len(control_outcome)
-    att = treated_outcome.mean() - control_outcome.mean()
-    att.to_csv(f"/home/juliusdoebelt/documents/repos/Diploma_Thesis/contributions/output/outcome/att_{method}.csv")
-    
-    if verbose:
-        # Print results
-        print("\n -----------------------  Outcome  -----------------------\n")
-        print(f"Mean outcome for treated: {treated_outcome.mean()}")
-        print(f"Mean outcome for control: {control_outcome.mean()}")
-        print(f"Average Treatment Effect on the Treated (ATT): {att}")
-
-    return matched_data
-
-
-def get_covariate_balance_for_ps_range(df: pd.DataFrame, ps_low: float, ps_high: float) -> pd.DataFrame:
-    """Takes a dataframe and range for the propensity score and checks the covariate balance for the given range.
-    Outputs the mean values of all individuals for the given range for treated and untreated individuals.
-    """
-    data = df
-    features = df.columns.to_list()
-    features.remove('treat')
-    ps_range_data = pd.DataFrame(data[(data['ps'] >= ps_low) & (data['ps'] <= ps_high)])
-    if len(ps_range_data) == 0:
-        print(f"No individuals in the given range {ps_low} - {ps_high}.")
-        return None
-    balance = create_table_one(
-                data=ps_range_data,
-                treatment_col='treat',
-                features=features
-                )
-    return balance
-

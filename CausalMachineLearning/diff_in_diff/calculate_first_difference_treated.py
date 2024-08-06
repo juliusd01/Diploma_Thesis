@@ -23,6 +23,5 @@ with open('first_difference_regression.txt', 'w') as f:
         names = ['Lagrange multiplier statistic', 'p-value', 'f-value', 'f p-value']
         test = sms.het_breuschpagan(model.resid, model.model.exog)
         f.write('\nBreusch-Pagan test:\n')
-        f.write(lzip(names, test).__str__())
-        
+        f.write(lzip(names, test).__str__())  
         f.write('\n\n')

@@ -87,14 +87,20 @@ def __estimate_ps_logistic_regression(df: pd.DataFrame) -> pd.DataFrame:
 
     # check variance inflation factor
     vif = get_variance_inflation_factor(data_expanded)
-    print(vif)
+    #print(vif)
 
     y = df['treat']
-    # Fit the model
-    logit_model = sm.Logit(y, data_expanded)
-    result = logit_model.fit()
-    # Get the propensity scores
-    data_expanded['ps'] = result.predict(data_expanded)
+
+    # Standardize the features to the same scale
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data_expanded)
+
+    # Create and fit the LASSO model
+    logreg_model = LogisticRegression(penalty='l1', solver='liblinear')
+    logreg_model.fit(data_scaled, y)
+
+    # Predict the propensity scores
+    data_expanded['ps'] = logreg_model.predict_proba(data_scaled)[:, 1]
     data_expanded['treat'] = y
 
     # add outcome variables to expanded data

@@ -18,7 +18,6 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 INDEPENDENT_VARIABLES = ["female", "born_germany", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings", 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0',
        'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'kindergarten_stats_unknown', 'parent_nongerman_unknown', 'education_unknown', 'anz_osiblings_unknown']
 
-
 def __read_in_data() -> pd.DataFrame:
     data = pd.read_csv('data/preprocessed_data.csv')
     # only select participants from the years 2008/09, 2009/10, and 2010/11
@@ -116,7 +115,6 @@ def __estimate_ps_logistic_regression(df: pd.DataFrame) -> pd.DataFrame:
 
 def __estimate_ps_CART(df: pd.DataFrame) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
-
     y = df['treat']
     cart_model = DecisionTreeClassifier()
     cart_model.fit(data, y)
@@ -163,7 +161,8 @@ def __estimate_ps_Random_Forest(df: pd.DataFrame) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
 
     y = df['treat']
-    rf_model = RandomForestClassifier()
+    
+    rf_model = RandomForestClassifier(random_state=40)
     rf_model.fit(data, y)
     data['ps'] = rf_model.predict_proba(data)[:, 1]
     data['treat'] = y
@@ -199,18 +198,18 @@ def __estimate_ps_LASSO(df: pd.DataFrame) -> pd.DataFrame:
     lasso_model.fit(data_scaled, y)
 
     # Predict the propensity scores
-    data['ps'] = lasso_model.predict_proba(data_scaled)[:, 1]
-    data['treat'] = y
+    data_expanded['ps'] = lasso_model.predict_proba(data_scaled)[:, 1]
+    data_expanded['treat'] = y
 
     # add outcome variables to expanded data
-    data['sportsclub'] = df['sportsclub']
-    data['sport_hrs'] = df['sport_hrs']
-    data['oweight'] = df['oweight']
-    data['kommheard'] = df['kommheard']
-    data['kommgotten'] = df['kommgotten']
-    data['kommused'] = df['kommused']
+    data_expanded['sportsclub'] = df['sportsclub']
+    data_expanded['sport_hrs'] = df['sport_hrs']
+    data_expanded['oweight'] = df['oweight']
+    data_expanded['kommheard'] = df['kommheard']
+    data_expanded['kommgotten'] = df['kommgotten']
+    data_expanded['kommused'] = df['kommused']
 
-    return data
+    return data_expanded
 
 
 def estimate_propensity_scores(method: str) -> pd.DataFrame:

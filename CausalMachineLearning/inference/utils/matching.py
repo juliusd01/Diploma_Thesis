@@ -20,6 +20,7 @@ def estimate_att_nearest_neighbor(df: pd.DataFrame, method: str, caliper: float=
     # Perform caliper matching
     matcher = NearestNeighborMatch(replace=True, ratio=1, random_state=42, caliper=caliper)
     matched_data = matcher.match(data=df, treatment_col='treat', score_cols=['ps'])
+    matched_data.reset_index(drop=True, inplace=True)
     len_after_matching = len(matched_data)
     if len_after_matching < 10054: # 5027 is number of treated units (5027*2 = 10054)
         print(f"{int((10054 - len_after_matching)/2)} observations of the treated units were not matched for the {method}. The estimates do not represent the ATT anymore")
@@ -28,20 +29,32 @@ def estimate_att_nearest_neighbor(df: pd.DataFrame, method: str, caliper: float=
     else:
         raise ValueError(f"More observations after matching {len_after_matching} than before {len_before_matching}. Carefully examine the data.")
     
-    treated_outcome = matched_data[matched_data['treat'] == 1][['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']]
-    control_outcome = matched_data[matched_data['treat'] == 0][['oweight', 'sportsclub', 'sport_hrs', 'kommheard', 'kommgotten', 'kommused']]
-    assert len(treated_outcome) == len(control_outcome)
-    att = treated_outcome.mean() - control_outcome.mean()
-    att.to_csv(f"CausalMachineLearning/output/att/nearest_neighbor/att_{method}.csv")
-    
-    if verbose:
-        # Print results
-        print("\n -----------------------  Outcome  -----------------------\n")
-        print(f"Mean outcome for treated: {treated_outcome.mean()}")
-        print(f"Mean outcome for control: {control_outcome.mean()}")
-        print(f"Average Treatment Effect on the Treated (ATT): {att}")
-
+    print(f"\nResults for {method.upper()} are estimated...")
+    results_df = pd.DataFrame(columns=['Outcome Variable', 'ATE', 'AI Standard Error'])
+    for outcome in OUTCOME_VARS:
+        ate, ai_se = calculate_abadie_imbens_se(matched_data, matched_data[outcome])
+        if verbose:
+            print(f"Outcome Variable: {outcome}")
+            print(f"ATE: {ate}")
+            print(f"AI Standard Error: {ai_se}")
+        results_df = pd.concat([results_df, pd.DataFrame([[outcome, ate, ai_se]], columns=['Outcome Variable', 'ATE', 'AI Standard Error'])])
+    results_df.to_csv(f"CausalMachineLearning/output/att/nearest_neighbor/{method}.csv", index=False)
     return matched_data
+
+def calculate_abadie_imbens_se(matched, y):
+    treated_outcomes = y[matched[matched['treat'] == 1].index]
+    control_outcomes = y[matched[matched['treat'] == 0].index]
+    diffs = treated_outcomes.values - control_outcomes.values
+
+    # Mean and variance of the treatment effect
+    ate = np.mean(diffs)
+    n = len(treated_outcomes)  # Since n_treated == n_control
+    ate_var = np.var(diffs, ddof=1) / n
+
+    # Abadie-Imbens corrected standard error
+    ai_se = np.sqrt(ate_var + (np.var(treated_outcomes, ddof=1) / n) + (np.var(control_outcomes, ddof=1) / n))
+
+    return ate, ai_se
 
 
 def estimate_att_subclassification(df: pd.DataFrame, no_subclasses: int=5) -> float:
@@ -117,7 +130,7 @@ def estimate_att_and_standard_errors_ipw(df: pd.DataFrame, n_bootstraps: int=100
     return round(standard_error, 4)
 
 
-def get_covariate_balance_for_ps_range(df: pd.DataFrame, ps_low: float, ps_high: float) -> pd.DataFrame:
+def get_covariate_balance_for_ps_range(df: pd.DataFrame, ps_low: float, ps_high: float, method: str) -> pd.DataFrame:
     """Takes a dataframe and range for the propensity score and checks the covariate balance for the given range.
     Outputs the mean values of all individuals for the given range for treated and untreated individuals.
     """
@@ -143,30 +156,28 @@ def get_covariate_balance_for_ps_range(df: pd.DataFrame, ps_low: float, ps_high:
     number_of_treated = balance_df[balance_df["Variable"] == "n"].iloc[0, 1]
     # delete the row with 'n' as it is not needed
     balance_df = balance_df[balance_df["Variable"] != "n"]
-    __plot_smd(balance_df, number_of_treated, ps_low, ps_high)
+    __plot_smd(balance_df, number_of_treated, ps_low, ps_high, method)
     return balance_df
 
-def __plot_smd(balance_df: pd.DataFrame, number_of_treated: int, ps_low: float, ps_high: float):
+def __plot_smd(balance_df: pd.DataFrame, number_of_treated: int, ps_low: float, ps_high: float, method: str):
     if balance_df is None:
         return None
-    
+    ps_low = round(ps_low, 1)
+    ps_high = round(ps_high, 1)
     # Ensure 'SMD' is numeric
     balance_df['SMD'] = pd.to_numeric(balance_df['SMD'], errors='coerce')
     
     # Separate data into valid SMDs and NaNs
     valid_smd = balance_df.dropna(subset=['SMD'])
     nan_smd = balance_df[balance_df['SMD'].isna()]
-    
+
     # Plot
     plt.figure(figsize=(8, 8))
-    
     # Scatter plot of valid SMD values within the range -1 to 1
     within_range = valid_smd[(valid_smd['SMD'] >= -1) & (valid_smd['SMD'] <= 1)]
     plt.scatter(within_range['SMD'], within_range['Variable'], color='blue', label='Valid SMD')
-    
     # Scatter plot of NaN SMD values
     plt.scatter([0] * len(nan_smd), nan_smd['Variable'], color='red', marker='x', label='NaN SMD')
-    
     # Annotate values outside the range -1 to 1
     outside_range = valid_smd[(valid_smd['SMD'] < -1) | (valid_smd['SMD'] > 1)]
     for _, row in outside_range.iterrows():
@@ -179,28 +190,18 @@ def __plot_smd(balance_df: pd.DataFrame, number_of_treated: int, ps_low: float, 
         plt.scatter(x_pos, row['Variable'], color='blue')
         plt.text(x_pos + (0.05 if row['SMD'] < -1 else -0.05), row['Variable'], f"{row['SMD']:.2f}", fontsize=8, ha=ha, va='center')
 
-    
     # Vertical line at 0
     plt.axvline(x=0, color='gray', linestyle='dashed')
     plt.axvline(x=0.25, color='red', linestyle='dashed')
     plt.axvline(x=-0.25, color='red', linestyle='dashed')
-    
-    # Set x-axis range
+    # axis
     plt.xlim(-1, 1)
-    
-    # Labels and title
     plt.xlabel('SMD')
     plt.ylabel('Variables')
     plt.title(f'n={number_of_treated}, PS Range=[{round(ps_low, 1)},{round(ps_high, 1)}]')
-    
     # Grid for better readability
     plt.grid(True, axis='x', linestyle='--', linewidth=0.7, alpha=0.7)
-    
-    # Legend
     plt.legend()
-    
-    # Tight layout for better spacing
     plt.tight_layout()
-    
-    # Show plot
-    plt.show()
+    plt.savefig(f"CausalMachineLearning/output/cov_balance/{method}_{ps_low}_{ps_high}.png")
+    plt.close()

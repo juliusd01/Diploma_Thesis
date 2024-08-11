@@ -94,8 +94,8 @@ def __estimate_ps_logistic_regression(df: pd.DataFrame) -> pd.DataFrame:
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(data_expanded)
 
-    # Create and fit the LASSO model
-    logreg_model = LogisticRegression(penalty='l1', solver='liblinear')
+    # Create and fit the logreg model
+    logreg_model = LogisticRegression(solver='liblinear', random_state=42)
     logreg_model.fit(data_scaled, y)
 
     # Predict the propensity scores
@@ -129,9 +129,9 @@ def __estimate_ps_CART(df: pd.DataFrame) -> pd.DataFrame:
     data['kommgotten'] = df['kommgotten']
     data['kommused'] = df['kommused']
 
-    # plot the decision tree
-    # plt.figure(figsize=(40,20))
-    # plot_tree(cart_model, filled=True, feature_names=INDEPENDENT_VARIABLES)
+    # plot the decision tree limited to the first 2 splits
+    # plt.figure(figsize=(20,10))
+    # plot_tree(cart_model, max_depth=2, filled=True, feature_names=INDEPENDENT_VARIABLES)
     # plt.show()
 
     return data
@@ -194,7 +194,7 @@ def __estimate_ps_LASSO(df: pd.DataFrame) -> pd.DataFrame:
     data_scaled = scaler.fit_transform(data_expanded)
 
     # Create and fit the LASSO model
-    lasso_model = LogisticRegression(penalty='l1', solver='liblinear')
+    lasso_model = LogisticRegression(penalty='l1', solver='liblinear', random_state=42)
     lasso_model.fit(data_scaled, y)
 
     # Predict the propensity scores

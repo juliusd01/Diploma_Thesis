@@ -17,6 +17,7 @@ for method in methods:
     ps_estimation.plot_roc_auc_score(data, method=method)
     ps_estimation.check_common_support(data, method=method)
     matched_data = matching.estimate_att_nearest_neighbor(data, method=method, verbose=True)
+    matched_data.to_csv(f"data/matched_data/{method}_matched.csv", index=False)
     ps_estimation.check_common_support(matched_data, method=f"{method}_matched")
     cov_balances = [matching.get_covariate_balance_for_ps_range(matched_data, ps_low=i, ps_high=i+0.2, method=method) for i in [0, 0.2, 0.4, 0.6, 0.8]]
 

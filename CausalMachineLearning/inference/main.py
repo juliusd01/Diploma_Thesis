@@ -16,14 +16,15 @@ for method in methods:
     data = ps_estimation.estimate_propensity_scores(method=method)
     ps_estimation.plot_roc_auc_score(data, method=method)
     ps_estimation.check_common_support(data, method=method)
-    matched_data = matching.estimate_att_nearest_neighbor(data, method=method, verbose=True)
+    matched_data = matching.estimate_att_nearest_neighbor(data, method=method, verbose=False)
     matched_data.to_csv(f"data/matched_data/{method}_matched.csv", index=False)
     ps_estimation.check_common_support(matched_data, method=f"{method}_matched")
     cov_balances = [matching.get_covariate_balance_for_ps_range(matched_data, ps_low=i, ps_high=i+0.2, method=method) for i in [0, 0.2, 0.4, 0.6, 0.8]]
+    # model robustness
+    ps_estimation.check_model_robustness(method=method)
 
 
-csv_files = ["CausalMachineLearning/output/att/nearest_neighbor/logreg.csv", "CausalMachineLearning/output/att/nearest_neighbor/lasso.csv", "CausalMachineLearning/output/att/nearest_neighbor/cart.csv", "CausalMachineLearning/output/att/nearest_neighbor/random_forest.csv", "CausalMachineLearning/output/att/nearest_neighbor/boosted_trees.csv"]
-output_gen.generate_latex_table_for_NNM(csv_files=csv_files)
+output_gen.generate_all_latex_tables()
 
 
 ###########################

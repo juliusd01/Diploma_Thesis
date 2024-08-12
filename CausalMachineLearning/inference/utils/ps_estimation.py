@@ -1,7 +1,6 @@
 
 import pandas as pd
 import numpy as np
-import statsmodels.api as sm
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import PolynomialFeatures
@@ -12,6 +11,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_curve, roc_auc_score
 import xgboost as xgb
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+import utils.matching as matching
 
 
 
@@ -74,7 +75,7 @@ def get_variance_inflation_factor(data):
     vif_data["VIF"] = [variance_inflation_factor(data.values, i) for i in range(data.shape[1])]
     return vif_data
 
-def __estimate_ps_logistic_regression(df: pd.DataFrame) -> pd.DataFrame:
+def __estimate_ps_logistic_regression(df: pd.DataFrame, C=1.0, max_iter=100, tol=1e-4, fit_intercept=True) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
     interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings"]
     # Generate interaction and quadratic terms on standardized data
@@ -95,7 +96,13 @@ def __estimate_ps_logistic_regression(df: pd.DataFrame) -> pd.DataFrame:
     data_scaled = scaler.fit_transform(data_expanded)
 
     # Create and fit the logreg model
-    logreg_model = LogisticRegression(solver='liblinear', random_state=42)
+    logreg_model = LogisticRegression(
+        solver='liblinear',
+        random_state=42,
+        C=C,
+        max_iter=max_iter,
+        tol=tol,
+        fit_intercept=fit_intercept)
     logreg_model.fit(data_scaled, y)
 
     # Predict the propensity scores
@@ -113,10 +120,17 @@ def __estimate_ps_logistic_regression(df: pd.DataFrame) -> pd.DataFrame:
     return data_expanded
 
 
-def __estimate_ps_CART(df: pd.DataFrame) -> pd.DataFrame:
+def __estimate_ps_CART(df: pd.DataFrame, criterion='gini', max_depth=None, min_samples_split=2, min_samples_leaf=1, max_leaf_nodes=None, min_impurity_decrease=0.0) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
     y = df['treat']
-    cart_model = DecisionTreeClassifier()
+    cart_model = DecisionTreeClassifier(
+        criterion=criterion,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf,
+        max_leaf_nodes=max_leaf_nodes,
+        min_impurity_decrease=min_impurity_decrease
+    )
     cart_model.fit(data, y)
     data['ps'] = cart_model.predict_proba(data)[:, 1]
     data['treat'] = y
@@ -137,11 +151,19 @@ def __estimate_ps_CART(df: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def __estimate_ps_XGBoost(df: pd.DataFrame) -> pd.DataFrame:
+def __estimate_ps_XGBoost(df: pd.DataFrame, learning_rate=0.3, n_estimators=100, max_depth=6, reg_alpha=0, reg_lambda=1) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
 
     y = df['treat']
-    xgb_model = xgb.XGBClassifier(use_label_encoder=False, eval_metric='logloss')
+    xgb_model = xgb.XGBClassifier(
+        use_label_encoder=False,
+          eval_metric='logloss',
+          learning_rate=learning_rate,
+          n_estimators=n_estimators,
+          max_depth=max_depth,
+          reg_alpha=reg_alpha,
+          reg_lambda=reg_lambda
+          )
     xgb_model.fit(data, y)
     data['ps'] = xgb_model.predict_proba(data)[:, 1]
     data['treat'] = y
@@ -157,12 +179,22 @@ def __estimate_ps_XGBoost(df: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def __estimate_ps_Random_Forest(df: pd.DataFrame) -> pd.DataFrame:
+def __estimate_ps_Random_Forest(df: pd.DataFrame, n_estimators=100, criterion='gini', max_depth=None, min_samples_split=2, min_sample_leaf=1,
+                                max_leaf_nodes=None, min_impurity_decrease=0.0, random_state=40) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
 
     y = df['treat']
     
-    rf_model = RandomForestClassifier(random_state=40)
+    rf_model = RandomForestClassifier(
+        n_estimators=n_estimators,
+        criterion=criterion,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_sample_leaf,
+        max_leaf_nodes=max_leaf_nodes,
+        min_impurity_decrease=min_impurity_decrease,
+        random_state=random_state
+    )
     rf_model.fit(data, y)
     data['ps'] = rf_model.predict_proba(data)[:, 1]
     data['treat'] = y
@@ -177,7 +209,7 @@ def __estimate_ps_Random_Forest(df: pd.DataFrame) -> pd.DataFrame:
 
     return data
 
-def __estimate_ps_LASSO(df: pd.DataFrame) -> pd.DataFrame:
+def __estimate_ps_LASSO(df: pd.DataFrame, C=1.0, max_iter=100, tol=1e-4, fit_intercept=True) -> pd.DataFrame:
     data = df[INDEPENDENT_VARIABLES]
     interactions_terms = ["female", "parent_nongermany", "sportsclub_4_7", "music_4_7", "urban", "anz_osiblings"]
     # Generate interaction and quadratic terms on standardized data
@@ -194,7 +226,14 @@ def __estimate_ps_LASSO(df: pd.DataFrame) -> pd.DataFrame:
     data_scaled = scaler.fit_transform(data_expanded)
 
     # Create and fit the LASSO model
-    lasso_model = LogisticRegression(penalty='l1', solver='liblinear', random_state=42)
+    lasso_model = LogisticRegression(
+        penalty='l1',
+        solver='liblinear',
+        random_state=42,
+        C=C,
+        max_iter=max_iter,
+        tol=tol,
+        fit_intercept=fit_intercept)
     lasso_model.fit(data_scaled, y)
 
     # Predict the propensity scores
@@ -236,6 +275,149 @@ def estimate_propensity_scores(method: str) -> pd.DataFrame:
         raise ValueError("Invalid method specified. Please choose one of the following: 'logreg', 'cart', 'boosted_trees', 'random_forest', 'lasso'.")
 
     return data
+
+
+def check_model_robustness(method: str) -> pd.DataFrame:
+
+    data = __read_in_data()
+    data = handle_missing_values(data)
+    base_data = __create_yob_dummies(data)
+    if method == "random_forest":
+        # 1st: Shallower trees
+        data_1 = __estimate_ps_Random_Forest(
+            df=base_data.copy(),
+            max_depth=5 
+        )
+        matching.estimate_att_nearest_neighbor(df=data_1, method=f"{method}_shallow")
+        # 2nd: Restrictive Trees
+        data_2 = __estimate_ps_Random_Forest(
+            df=base_data.copy(),
+            min_samples_split=10,
+            min_sample_leaf=5
+        )
+        matching.estimate_att_nearest_neighbor(df=data_2, method=f"{method}_restrictive")
+        # 3rd: More Trees, less depth
+        data_3 = __estimate_ps_Random_Forest(
+            df=base_data.copy(),
+            n_estimators=500,
+            max_depth=10,
+            criterion='entropy'
+        )
+        matching.estimate_att_nearest_neighbor(df=data_3, method=f"{method}_more_trees")
+        # 4th: Increased minimum impurity decrease
+        data_4 = __estimate_ps_Random_Forest(
+            df=base_data.copy(),
+            min_impurity_decrease=0.01
+        )
+        matching.estimate_att_nearest_neighbor(df=data_4, method=f"{method}_impurity")
+    elif method == "cart":
+        # 1st: Shallower trees
+        data_1 = __estimate_ps_CART(
+            df=base_data.copy(),
+            max_depth=5
+        )
+        matching.estimate_att_nearest_neighbor(df=data_1, method=f"{method}_shallow")
+        # 2nd: Restrictive Trees
+        data_2 = __estimate_ps_CART(
+            df=base_data.copy(),
+            min_samples_split=10,
+            min_samples_leaf=5
+        )
+        matching.estimate_att_nearest_neighbor(df=data_2, method=f"{method}_restrictive")
+        # 3rd: More Trees, less depth
+        data_3 = __estimate_ps_CART(
+            df=base_data.copy(),
+            max_depth=10
+        )
+        matching.estimate_att_nearest_neighbor(df=data_3, method=f"{method}_more_trees")
+        # 4th: Increased minimum impurity decrease
+        data_4 = __estimate_ps_CART(
+            df=base_data.copy(),
+            min_impurity_decrease=0.01
+        )
+        matching.estimate_att_nearest_neighbor(df=data_4, method=f"{method}_impurity")
+    elif method == "boosted_trees":
+        # 1st Reduced Learning Rate with more more trees
+        data_1 = __estimate_ps_XGBoost(
+            df=base_data.copy(),
+            learning_rate=0.1,
+            n_estimators=1000
+        )
+        matching.estimate_att_nearest_neighbor(df=data_1, method=f"{method}_low_lr")
+        # 2nd: Deeper trees
+        data_2 = __estimate_ps_XGBoost(
+            df=base_data.copy(),
+            max_depth=10
+        )
+        matching.estimate_att_nearest_neighbor(df=data_2, method=f"{method}_deep")
+        # 3rd: more restrictive trees
+        data_3 = __estimate_ps_XGBoost(
+            df=base_data.copy(),
+            reg_alpha=1
+        )
+        matching.estimate_att_nearest_neighbor(df=data_3, method=f"{method}_restrictive")
+        # 4th: higher lambda
+        data_4 = __estimate_ps_XGBoost(
+            df=base_data.copy(),
+            reg_lambda=10
+        )
+        matching.estimate_att_nearest_neighbor(df=data_4, method=f"{method}_lambda")
+    elif method == "lasso":
+        # 1st: Higher regularization
+        data_1 = __estimate_ps_LASSO(
+            df=base_data.copy(),
+            C=0.1
+        )
+        matching.estimate_att_nearest_neighbor(df=data_1, method=f"{method}_increased_reg")
+        # 2nd: Weaker regularization
+        data_2 = __estimate_ps_LASSO(
+            df=base_data.copy(),
+            C=10
+        )
+        matching.estimate_att_nearest_neighbor(df=data_2, method=f"{method}_decreased_reg")
+        # 3rd: More iterations with higher precision
+        data_3 = __estimate_ps_LASSO(
+            df=base_data.copy(),
+            max_iter=500,
+            tol=1e-5
+        )
+        matching.estimate_att_nearest_neighbor(df=data_3, method=f"{method}_more_iter")
+        # 4th: No intercept
+        data_4 = __estimate_ps_LASSO(
+            df=base_data.copy(),
+            fit_intercept=False
+        )
+        matching.estimate_att_nearest_neighbor(df=data_4, method=f"{method}_no_intercept")
+    elif method == "logreg":
+        # 1st: Higher regularization
+        data_1 = __estimate_ps_logistic_regression(
+            df=base_data.copy(),
+            C=0.1
+        )
+        matching.estimate_att_nearest_neighbor(df=data_1, method=f"{method}_increased_reg")
+        # 2nd: Weaker regularization
+        data_2 = __estimate_ps_logistic_regression(
+            df=base_data.copy(),
+            C=10
+        )
+        matching.estimate_att_nearest_neighbor(df=data_2, method=f"{method}_decreased_reg")
+        # 3rd: More iterations with higher precision
+        data_3 = __estimate_ps_logistic_regression(
+            df=base_data.copy(),
+            max_iter=500,
+            tol=1e-5
+        )
+        matching.estimate_att_nearest_neighbor(df=data_3, method=f"{method}_more_iter")
+        # 4th: No intercept
+        data_4 = __estimate_ps_logistic_regression(
+            df=base_data.copy(),
+            fit_intercept=False
+        )
+        matching.estimate_att_nearest_neighbor(df=data_4, method=f"{method}_no_intercept")
+    else:
+        raise ValueError("Invalid method specified. Please choose one of the following: 'cart', 'boosted_trees', 'random_forest', 'lasso'.")
+
+
 
 
 

@@ -61,7 +61,7 @@ def __generate_latex_table_for_NNM(csv_files: list, filename: str):
     latex_table += "\\hline\n"
 
     for i, var in enumerate(desired_order):
-        latex_table += f"{var} & {fixed_col1_estimates[i]} & {fixed_col2_estimates[i]}"
+        latex_table += f"{var_to_table_name[var]} & {fixed_col1_estimates[i]} & {fixed_col2_estimates[i]}"
         for (ate, se) in data[var]:
             latex_table += f" & {ate:.3f}"
         latex_table += " \\\\\n"

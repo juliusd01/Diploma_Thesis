@@ -263,13 +263,13 @@ def estimate_propensity_scores(method: str) -> pd.DataFrame:
     # estimate the propensity scores by the specified method
     if method == "logreg":
         data = __estimate_ps_logistic_regression(df=data)
-    elif method == "cart":
+    elif method == "CART":
         data = __estimate_ps_CART(df=data)
-    elif method == "boosted_trees":
+    elif method == "Boosting":
         data = __estimate_ps_XGBoost(df=data)
-    elif method == "random_forest":
+    elif method == "RF":
         data = __estimate_ps_Random_Forest(df=data)
-    elif method == "lasso":
+    elif method == "LASSO":
         data = __estimate_ps_LASSO(df=data)
     else:
         raise ValueError("Invalid method specified. Please choose one of the following: 'logreg', 'cart', 'boosted_trees', 'random_forest', 'lasso'.")
@@ -282,7 +282,7 @@ def check_model_robustness(method: str) -> pd.DataFrame:
     data = __read_in_data()
     data = handle_missing_values(data)
     base_data = __create_yob_dummies(data)
-    if method == "random_forest":
+    if method == "RF":
         # 1st: Shallower trees
         data_1 = __estimate_ps_Random_Forest(
             df=base_data.copy(),
@@ -310,7 +310,7 @@ def check_model_robustness(method: str) -> pd.DataFrame:
             min_impurity_decrease=0.01
         )
         matching.estimate_att_nearest_neighbor(df=data_4, method=f"{method}_impurity")
-    elif method == "cart":
+    elif method == "CART":
         # 1st: Shallower trees
         data_1 = __estimate_ps_CART(
             df=base_data.copy(),
@@ -336,7 +336,7 @@ def check_model_robustness(method: str) -> pd.DataFrame:
             min_impurity_decrease=0.01
         )
         matching.estimate_att_nearest_neighbor(df=data_4, method=f"{method}_impurity")
-    elif method == "boosted_trees":
+    elif method == "Boosting":
         # 1st Reduced Learning Rate with more more trees
         data_1 = __estimate_ps_XGBoost(
             df=base_data.copy(),
@@ -362,7 +362,7 @@ def check_model_robustness(method: str) -> pd.DataFrame:
             reg_lambda=10
         )
         matching.estimate_att_nearest_neighbor(df=data_4, method=f"{method}_lambda")
-    elif method == "lasso":
+    elif method == "LASSO":
         # 1st: Higher regularization
         data_1 = __estimate_ps_LASSO(
             df=base_data.copy(),

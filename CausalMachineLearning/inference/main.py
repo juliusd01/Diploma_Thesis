@@ -7,7 +7,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # SETTINGS
-methods = ["logreg", "lasso", "cart", "random_forest", "boosted_trees"]
+methods = ["logreg", "LASSO", "CART", "RF", "Boosting"]
 
 ###########################
 # Nearest Neighbor Matching

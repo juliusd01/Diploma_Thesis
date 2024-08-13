@@ -55,7 +55,7 @@ def __generate_latex_table_for_NNM(csv_files: list, filename: str):
             data[var].append((row['ATE'], row['AI Standard Error']))
 
     # Create the LaTeX table
-    latex_table = "\\begin{adjustbox}{angle=90}\n\\begin{tabular}{ll" + "c" + "c" * len(csv_files) + "}\n"
+    latex_table = "\\begin{sidewaystable*}\n\\centering\n\\begin{tabular}{ll" + "c" + "c" * len(csv_files) + "}\n"
     latex_table += "\\hline\n"
     latex_table += "Outcome Variable & Base DD & First Diff & " + " & ".join([f"{method}" for method in filenames]) + " \\\\\n"
     latex_table += "\\hline\n"
@@ -76,7 +76,7 @@ def __generate_latex_table_for_NNM(csv_files: list, filename: str):
     latex_table += "N & 5027 & 5027 " + " & ".join([""] * len(csv_files)) + " \\\\\n"
     latex_table += "\\hline\n"
 
-    latex_table += "\\end{tabular}\n\\caption{Your caption here}\n\\label{tab:your_label}\n\\end{adjustbox}"
+    latex_table += "\\end{tabular}\n\\caption{Your caption here}\n\\label{tab:your_label}\n\\end{sidewaystable*}"
 
     # Save the LaTeX table to a file
     with open(f"CausalMachineLearning/output/latex/{filename}.tex", "w") as f:

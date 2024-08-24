@@ -129,7 +129,8 @@ def __estimate_ps_CART(df: pd.DataFrame, criterion='gini', max_depth=None, min_s
         min_samples_split=min_samples_split,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes,
-        min_impurity_decrease=min_impurity_decrease
+        min_impurity_decrease=min_impurity_decrease,
+        random_state=42
     )
     cart_model.fit(data, y)
     data['ps'] = cart_model.predict_proba(data)[:, 1]

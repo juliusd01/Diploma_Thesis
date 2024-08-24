@@ -23,13 +23,13 @@ def estimate_att_nearest_neighbor(df: pd.DataFrame, method: str, caliper: float=
     matched_data.reset_index(drop=True, inplace=True)
     len_after_matching = len(matched_data)
     if len_after_matching < 10054: # 5027 is number of treated units (5027*2 = 10054)
-        print(f"{int((10054 - len_after_matching)/2)} observations of the treated units were not matched for the {method}. The estimates do not represent the ATT anymore")
+        print(f"{5027 - (int((10054 - len_after_matching)/2))} observations of the treated units were matched for the {method}. The estimates do not represent the ATT anymore")
     elif len_after_matching == 10054:
         print(f"All observations were matched for the {method}. The estimates represent the ATT.")
     else:
         raise ValueError(f"More observations after matching {len_after_matching} than before {len_before_matching}. Carefully examine the data.")
     
-    print(f"\nResults for {method.upper()} are estimated...")
+    print(f"Results for {method.upper()} are estimated...\n")
     results_df = pd.DataFrame(columns=['Outcome Variable', 'ATE', 'AI Standard Error'])
     for outcome in OUTCOME_VARS:
         ate, ai_se = calculate_abadie_imbens_se(matched_data, matched_data[outcome])

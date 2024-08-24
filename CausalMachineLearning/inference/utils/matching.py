@@ -38,6 +38,7 @@ def estimate_att_nearest_neighbor(df: pd.DataFrame, method: str, caliper: float=
             print(f"ATE: {ate}")
             print(f"AI Standard Error: {ai_se}")
         results_df = pd.concat([results_df, pd.DataFrame([[outcome, ate, ai_se]], columns=['Outcome Variable', 'ATE', 'AI Standard Error'])])
+        results_df["test_statistics"] = results_df["ATE"] / results_df["AI Standard Error"]
     results_df.to_csv(f"CausalMachineLearning/output/att/nearest_neighbor/{method}.csv", index=False)
     return matched_data
 

@@ -2,35 +2,38 @@ import statsmodels.formula.api as smf
 import pandas as pd
 from stargazer.stargazer import Stargazer
 
-pd.set_option('display.max_rows', None)
 
 # load cleaned data
 df = pd.read_csv('data/preprocessed_data.csv')
-treated = df[(df['treat'] == 1) & (df['year_3rd'].isin(['2008/09', '2009/10', '2010/11']))]
-controls = df[(df['treat'] == 0) & (df['year_3rd'].isin(['2008/09', '2009/10', '2010/11']))]
+df_latex = df.copy()
+df_latex = df_latex[df_latex['year_3rd'].isin(['2008/09', '2009/10', '2010/11'])]
+df_latex = pd.get_dummies(df_latex, columns=['yob'], prefix='yob', dtype=int)
+treated = df_latex[df_latex['treat'] == 1]
+controls = df_latex[df_latex['treat'] == 0]
 
 ######################
-# Summary statistics
+# Table 2: Summary statistics
 ######################
 # Define the variables to summarize
-variables = ['age', 'female', 'urban', 'academictrack', 'newspaper', 'art_at_home', 'kommheard', 'kommgotten', 'kommused', 'sportsclub', 'sport_hrs', 'oweight', 'tbula_3rd', 'treat']
-# Generate summary statistics for the specified variables
-summary = df[variables].describe().transpose()
-# Format the summary statistics
-summary = summary[['mean', 'std', 'min', 'max']].round(2)
-print("Total summary statistics: ", summary)
+variables = ['born_germany', 'parent_nongermany', 'female', 'sportsclub_4_7', 'music_4_7', 'urban', 'yob_1998.0', 'yob_1999.0', 'yob_2000.0', 'yob_2001.0', 'yob_2002.0', 'yob_2003.0', 'abi_p', 'real_p', 'haupt_p', 'anz_osiblings']
 
-# Generate summary statistics for the specified variables for the treated group
+# Generate summary statistics for the specified variables for the treated and control group
 summary_treated = treated[variables].describe().transpose()
-summary_treated = summary_treated[['mean', 'std', 'min', 'max']].round(2)
-print("Treated summary statistics: ", summary_treated)
-print(len(treated))
-
-# Generate summary statistics for the specified variables for the control group
+summary_treated = summary_treated[['mean', 'std']].round(2).rename(columns={'mean': 'Treatment state', 'std': 'Treatment std'})
 summary_controls = controls[variables].describe().transpose()
-summary_controls = summary_controls[['mean', 'std', 'min', 'max']].round(2)
-print(" \n Control summary statistics: ", summary_controls)
-print(len(controls))
+summary_controls = summary_controls[['mean', 'std']].round(2).rename(columns={'mean': 'Control states', 'std': 'Control std'})
+
+# Calculate standardized difference
+standardized_diff = (summary_treated['Treatment state'] - summary_controls['Control states']) / \
+                    ((summary_treated['Treatment std']**2 + summary_controls['Control std']**2) / 2).apply(lambda x: x**0.5)
+standardized_diff = standardized_diff.round(2).rename('Standardized Difference')
+
+# Concatenate the summary statistics for treated and control groups and standardized difference
+table_df = pd.concat([summary_treated[['Treatment state']], summary_controls[['Control states']], standardized_diff], axis=1)
+# Escape underscores in the index
+table_df.index = table_df.index.str.replace('_', '\\_')
+latex_table = table_df.to_latex(index=True, caption="Summary Statistics", label="tab:summary_statistics", float_format="%.2f")
+print(latex_table)
 
 exit()
 ######################

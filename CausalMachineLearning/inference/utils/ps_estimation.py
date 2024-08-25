@@ -328,9 +328,10 @@ def check_model_robustness(method: str) -> pd.DataFrame:
         # 3rd: More Trees, less depth
         data_3 = __estimate_ps_CART(
             df=base_data.copy(),
-            max_depth=10
+            max_depth=10,
+            max_leaf_nodes=100
         )
-        matching.estimate_att_nearest_neighbor(df=data_3, method=f"{method}_more_trees")
+        matching.estimate_att_nearest_neighbor(df=data_3, method=f"{method}_less_leaves")
         # 4th: Increased minimum impurity decrease
         data_4 = __estimate_ps_CART(
             df=base_data.copy(),
